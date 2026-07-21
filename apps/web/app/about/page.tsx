@@ -3,7 +3,7 @@ export default function AboutPage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#f8fafc",
+        background: "#fbfcf8",
         padding: "56px 24px",
       }}
     >

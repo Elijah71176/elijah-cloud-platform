@@ -6,18 +6,20 @@ import { CustomerModule } from './customers/customer.module';
 import { ProjectsModule } from './projects/projects.module';
 import { RequestModule } from './request/request.module';
 
+const isAwsRds =
+  process.env.DATABASE_URL?.includes('rds.amazonaws.com') ?? false;
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
 
-      // SSL Need to check AWS RDS
-      extra: {
-        ssl: {
-          rejectUnauthorized: false,
-        },
-      },
+      ssl: isAwsRds
+        ? {
+            rejectUnauthorized: false,
+          }
+        : false,
 
       autoLoadEntities: true,
       synchronize: true,

@@ -6,14 +6,14 @@ import { Project } from '../projects/project.entity';
 @Entity()
 export class Customer {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
   
   @Column() //nullable: false
-  email: string;
+  email!: string;
 
   @OneToMany(() => Project, (project) => project.customer)
-  projects: Project[];
+  projects!: Project[];
 }
