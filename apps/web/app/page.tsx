@@ -20,7 +20,7 @@ export default function HomePage() {
         >
           <div>
             <p style={{ color: "#2563eb", fontWeight: 900 }}>
-              Mini-DPS Client Portal
+              Elijah Cloud Platform
             </p>
 
             <h1
@@ -42,7 +42,7 @@ export default function HomePage() {
                 maxWidth: 640,
               }}
             >
-              Mini-DPS is a portfolio and client portal built with Next.js,
+              Elijah Cloud Platform is a portfolio and client portal built with Next.js,
               NestJS, PostgreSQL, Docker, AWS EC2, AWS S3 and GitHub Actions.
               It allows users to request services while an admin can manage
               projects and track progress.

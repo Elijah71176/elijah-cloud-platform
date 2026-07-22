@@ -1,6 +1,6 @@
-# Mini-DPS
+# Elijah Cloud Platform
 
-Mini-DPS is a cloud-based project management system built as part of my AWS Junior Developer project.
+Elijah Cloud Platform is a cloud-based project management system built as part of my AWS Junior Developer project.
 
 ## Architecture
 
@@ -9,7 +9,7 @@ User → S3 (Frontend) → EC2 (Backend Docker) → RDS (PostgreSQL)
 ## Live URLs
 
 Frontend:
-http://mini-dps-frontend-elijah.s3-website.eu-north-1.amazonaws.com
+coming soon
 
 Backend:
 http://13.60.17.29
@@ -54,7 +54,6 @@ External port:
 
 So API is accessed with:
 
-http://13.60.17.29
 
 ## Fixes Done
 

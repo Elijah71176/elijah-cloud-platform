@@ -3,14 +3,14 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 export class CreateRequestDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
-  service: string;
+  service!: string;
 
   @IsString()
   @IsOptional()
@@ -18,5 +18,5 @@ export class CreateRequestDto {
 
   @IsString()
   @IsNotEmpty()
-  message: string;
+  message!: string;
 }

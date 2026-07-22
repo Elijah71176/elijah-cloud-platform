@@ -12,7 +12,7 @@ export default function AdminLoginPage() {
 
   function login() {
     if (password === ADMIN_PASSWORD) {
-      localStorage.setItem('mini-dps-admin', 'true');
+  localStorage.setItem('elijah-cloud-platform-admin', 'true');
       router.push('/admin/projects');
       return;
     }

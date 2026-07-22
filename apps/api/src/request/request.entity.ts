@@ -8,23 +8,23 @@ import {
 @Entity('service_requests')
 export class ServiceRequest {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  email: string;
+  email!: string;
 
   @Column()
-  service: string;
+  service!: string;
 
   @Column({ nullable: true })
   telephone?: string;
 
   @Column('text')
-  message: string;
+  message!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

@@ -15,7 +15,7 @@ export default function AboutPage() {
         </h1>
 
         <p style={text}>
-          I am an AWS Cloud Developer student with hands-on experience in building
+          I am an Junior AWS Cloud Developer  with hands-on experience in building
           full-stack applications using modern technologies. I focus on developing
           scalable backend systems, deploying cloud infrastructure, and implementing
           CI/CD pipelines.
@@ -55,8 +55,7 @@ export default function AboutPage() {
           <div style={card}>
             <strong>Full-stack Cloud Projects</strong>
             <p style={textSmall}>
-              Built and deployed cloud-based applications including Mini-DPS Client
-              Portal with frontend (Next.js), backend (NestJS), PostgreSQL database,
+              Built and deployed cloud-based applications including Elijah Cloud Platform with frontend (Next.js), backend (NestJS), PostgreSQL database,
               and AWS infrastructure (EC2 & S3).
             </p>
           </div>

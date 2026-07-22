@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mini-DPS Client Portal",
+  title: "Elijah Cloud Platform",
   description: "Cloud Developer Portfolio & Service Platform",
 };
 
@@ -53,7 +53,7 @@ export default function RootLayout({
               color: "#0f172a",
             }}
           >
-            Mini-DPS
+            Elijah Cloud Platform
           </Link>
 
           <div

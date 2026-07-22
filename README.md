@@ -1,6 +1,6 @@
-# Mini-DPS Client Portal
+# Elijah Cloud Platform 
 
-Mini-DPS is a full-stack cloud-native application demonstrating modern software development, DevOps, and AWS deployment practices.
+Elijah Cloud Platform is a full-stack cloud-native application demonstrating modern software development, DevOps, and AWS deployment practices.
 
 The project simulates a real-world client portal with public portfolio pages, service request functionality, project management, and an admin dashboard connected to a live backend API and PostgreSQL database.
 
@@ -89,7 +89,7 @@ Database (PostgreSQL → AWS RDS)
 # Project Structure
 
 ```text
-mini-dps
+Elijah Cloud Platform
  ┣ apps
  ┃ ┣ api        → NestJS backend
  ┃ ┗ web        → Next.js frontend
@@ -231,14 +231,12 @@ Backend → AWS EC2
 ## Frontend
 
 ```text
-http://mini-dps-frontend-elijah.s3-website.eu-north-1.amazonaws.com/
 ```
 
 ## Backend API
 
 ```text
-http://13.60.17.29:3001
-```
+coming soon```
 
 ---
 

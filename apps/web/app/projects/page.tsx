@@ -1,19 +1,19 @@
 const projects = [
   {
-    title: "Mini-DPS Client Portal",
+    title: "Elijah Cloud Platform",
     status: "Deployed",
     description:
       "A cloud-based client service platform with request form, backend API, CI/CD and AWS deployment.",
     stack: ["Next.js", "NestJS", "PostgreSQL", "Docker", "AWS EC2", "AWS S3"],
     link: "/request",
-  },
+  }, 
   {
     title: "Backend API",
     status: "Completed",
     description:
       "NestJS backend running on EC2 with REST API endpoints for requests, customers and projects.",
     stack: ["NestJS", "Docker", "PostgreSQL", "EC2"],
-    link: "http://13.60.17.29/health",
+    link: "http://localhost:3001/health",
   },
   {
     title: "Frontend Deployment",
@@ -21,7 +21,7 @@ const projects = [
     description:
       "Next.js frontend exported as static files and deployed to AWS S3 using GitHub Actions.",
     stack: ["Next.js", "GitHub Actions", "AWS S3"],
-    link: "http://mini-dps-frontend-elijah.s3-website.eu-north-1.amazonaws.com/",
+    link: "#",
   },
 ];
 

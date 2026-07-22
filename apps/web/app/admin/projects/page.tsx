@@ -17,7 +17,7 @@ type Customer = {
   email: string;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://13.60.17.29';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 function statusStyle(status: Project['status']) {
   if (status === 'done') {
@@ -55,7 +55,7 @@ export default function ProjectsPage() {
 
   // ADMIN AUTH CHECK
   useEffect(() => {
-    const isAdmin = localStorage.getItem('mini-dps-admin');
+  const isAdmin = localStorage.getItem('elijah-cloud-platform-admin');
 
     if (isAdmin !== 'true') {
       router.push('/admin/login');
@@ -151,7 +151,7 @@ export default function ProjectsPage() {
         >
           <div>
             <p style={{ margin: 0, color: '#2563eb', fontWeight: 800 }}>
-              Mini-DPS Client Portal
+             Elijah Cloud Platform
             </p>
 
             <h1 style={{ margin: '6px 0', fontSize: 38 }}>
@@ -180,7 +180,7 @@ export default function ProjectsPage() {
 
             <button
               onClick={() => {
-                localStorage.removeItem('mini-dps-admin');
+                localStorage.removeItem('elijah-cloud-platform-admin');
                 router.push('/admin/login');
               }}
               style={{
