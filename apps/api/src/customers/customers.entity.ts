@@ -14,6 +14,14 @@ export class Customer {
   @Column() //nullable: false
   email!: string;
 
+  @Column({nullable: true})
+  phone?: string;
+
+  @Column({ type: 'text', nullable: true  })
+  description?: string;
+
+
+
   @OneToMany(() => Project, (project) => project.customer)
   projects!: Project[];
 }
