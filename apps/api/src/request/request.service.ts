@@ -24,7 +24,25 @@ export class RequestService {
 
   async findAll() {
     return this.requestRepository.find({
-      order: { createdAt: 'DESC' },
-    });
+      order: { createdAt: 'DESC' }, 
+   });
+    
   }
+
+  async updateStatus(
+  id: string,
+  status: 'pending' | 'converted' | 'closed',
+) {
+  const request = await this.requestRepository.findOne({
+    where: { id },
+  });
+
+  if (!request) {
+    throw new Error('Service request not found');
+  }
+
+  request.status = status;
+
+  return this.requestRepository.save(request);
+}
 }

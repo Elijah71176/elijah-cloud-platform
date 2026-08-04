@@ -1,0 +1,189 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type ServiceRequest = {
+  id: string;
+  name: string;
+  email: string;
+  service: string;
+  telephone?: string;
+  message: string;
+  createdAt: string;
+  status: "pending" | "converted" | "closed";
+};
+
+export default function AdminRequestsPage() {
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  useEffect(() => {
+    async function loadRequests() {
+      try {
+        const response = await fetch(`${API_URL}/request`);
+
+        if (!response.ok) {
+          throw new Error("Failed to load service requests");
+        }
+
+        const data = await response.json();
+        setRequests(data);
+      } catch {
+        setError("Could not load service requests.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadRequests();
+  }, [API_URL]);
+
+  async function convertToCustomer(request: ServiceRequest) {
+    const customerResponse = await fetch(`${API_URL}/customers`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: request.name,
+        email: request.email,
+        phone: request.telephone || "",
+        description: `${request.service}: ${request.message}`,
+      }),
+    });
+
+    if (!customerResponse.ok) {
+      alert("Could not create customer.");
+      return;
+    }
+
+    const statusResponse = await fetch(
+      `${API_URL}/request/${request.id}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "converted",
+        }),
+      }
+    );
+
+    if (!statusResponse.ok) {
+      alert("Customer created, but request status was not updated.");
+      return;
+    }
+
+    setRequests((currentRequests) =>
+      currentRequests.map((item) =>
+        item.id === request.id
+          ? { ...item, status: "converted" }
+          : item
+      )
+    );
+
+    alert("Request converted to customer.");
+  }
+
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        padding: 40,
+        background: "#f8fafc",
+      }}
+    >
+      <h1>Service Request Management</h1>
+
+      <p>Review requests submitted from the public website.</p>
+      <p>
+        You can convert a request to a customer profile after reviewing it.
+      </p>
+
+      {loading && <p>Loading requests...</p>}
+
+      {error && (
+        <p style={{ color: "crimson", fontWeight: "bold" }}>
+          {error}
+        </p>
+      )}
+
+      {!loading && !error && requests.length === 0 && (
+        <p>No service requests found.</p>
+      )}
+
+      <div
+        style={{
+          display: "grid",
+          gap: 16,
+          marginTop: 24,
+        }}
+      >
+        {requests.map((request) => (
+          <article
+            key={request.id}
+            style={{
+              background: "white",
+              border: "1px solid #e2e8f0",
+              borderRadius: 12,
+              padding: 18,
+            }}
+          >
+            <h2>{request.name}</h2>
+
+            <p>
+              <strong>Email:</strong> {request.email}
+            </p>
+
+            <p>
+              <strong>Telephone:</strong>{" "}
+              {request.telephone || "Not provided"}
+            </p>
+
+            <p>
+              <strong>Service:</strong> {request.service}
+            </p>
+
+            <p>
+              <strong>Message:</strong> {request.message}
+            </p>
+
+            <p style={{ color: "#64748b" }}>
+              Submitted: {new Date(request.createdAt).toLocaleString()}
+            </p>
+
+            <button
+              onClick={() => convertToCustomer(request)}
+              disabled={request.status === "converted"}
+              style={{
+                marginTop: 12,
+                padding: "10px 14px",
+                background:
+                  request.status === "converted"
+                    ? "#16a34a"
+                    : "#2563eb",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                cursor:
+                  request.status === "converted"
+                    ? "not-allowed"
+                    : "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              {request.status === "converted"
+                ? "Converted"
+                : "Convert to Customer"}
+            </button>
+          </article>
+        ))}
+      </div>
+    </main>
+  );
+}
