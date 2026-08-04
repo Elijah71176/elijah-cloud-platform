@@ -1,6 +1,7 @@
-import { Body, Controller, Post, Get } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { RequestService } from './request.service';
 import { CreateRequestDto } from './dto/create-request.dto';
+import { UpdateRequestStatusDto } from './dto/update-request-status.dto';
 
 @Controller('request')
 export class RequestController {
@@ -15,4 +16,11 @@ export class RequestController {
   findAll() {
     return this.requestService.findAll();
   }
+@Patch(':id/status')
+updateStatus(
+  @Param('id') id: string,
+  @Body() dto: UpdateRequestStatusDto,
+) {
+  return this.requestService.updateStatus(id, dto.status);
+}
 }

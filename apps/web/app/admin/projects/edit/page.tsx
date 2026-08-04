@@ -53,8 +53,7 @@ function EditProjectForm() {
       alert('Update failed');
       return;
     }
-
-    alert('Project updated!');
+    window.location.href = '/admin/projects';
   }
 
   if (loading) return <main style={{ padding: 24 }}>Loading...</main>;

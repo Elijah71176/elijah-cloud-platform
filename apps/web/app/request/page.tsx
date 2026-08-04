@@ -28,7 +28,11 @@ export default function RequestPage() {
 
   try {
      
-      const res = await fetch("http://localhost:3001/request",{
+     // const res = await fetch("http://localhost:3001/request",
+     const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+const res = await fetch(`${API_URL}/request`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

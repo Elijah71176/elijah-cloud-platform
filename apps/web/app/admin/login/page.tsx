@@ -13,7 +13,8 @@ export default function AdminLoginPage() {
   function login() {
     if (password === ADMIN_PASSWORD) {
   localStorage.setItem('elijah-cloud-platform-admin', 'true');
-      router.push('/admin/projects');
+  router.push("/admin/dashboard");
+      //router.push('/admin/projects');
       return;
     }
 
