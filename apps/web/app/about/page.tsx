@@ -83,9 +83,11 @@ export default function AboutPage() {
 
           <div style={card}>
             <p style={textSmall}>
-              I am currently seeking opportunities as a Junior Cloud Developer or
-              Full-stack Developer where I can contribute to real-world systems,
-              continue learning, and grow in cloud technologies and DevOps practices.
+              I am looking for an opportunity to begin my career as a Junior Cloud Developer,
+              Backend Developer, or Full-Stack Developer. With hands-on experience in cloud-native development, AWS, Java, Spring Boot, Node.js, Next.js, a
+              nd DevOps practices, I am eager to contribute to real-world projects, collaborate with talented teams, and continue growing as a software engineer.
+              I am passionate about building scalable solutions and making a positive impact through technology.
+
             </p>
           </div>
         </div>
