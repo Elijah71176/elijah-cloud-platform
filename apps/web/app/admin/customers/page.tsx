@@ -38,7 +38,29 @@ export default function AdminCustomersPage() {
     }
 
     loadCustomers();
+
   }, [API_URL]);
+
+  async function deleteCustomer(id: string) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this customer?"
+    );
+
+    if (!confirmed) return;
+
+    const response = await fetch(`${API_URL}/customers/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok && response.status !== 204) {
+      alert("Could not delete customer.");
+      return;
+    }
+
+    setCustomers((currentCustomers) =>
+      currentCustomers.filter((customer) => customer.id !== id)
+    );
+  }
 
   return (
     <main
@@ -100,7 +122,38 @@ export default function AdminCustomersPage() {
             <p>Email: {customer.email}</p>
             <p>Phone: {customer.phone || "Not provided"}</p>
             <p>{customer.description || "No description"}</p>
+
+            <Link
+              href={`/admin/customers/edit?id=${customer.id}`}
+              style={{
+                display: "inline-block",
+                marginTop: 12,
+                color: "#2563eb",
+                fontWeight: "bold",
+                textDecoration: "none",
+              }}
+            >
+              Edit
+            </Link>
+            <button
+            
+              onClick={() => deleteCustomer(customer.id)}
+              style={{
+                marginLeft: 14,
+                padding: "8px 12px",
+                background: "#fff1f2",
+                color: "#be123c",
+                border: "1px solid #fecaca",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              Delete
+            </button>
           </article>
+
+
         ))}
       </div>
     </main>
