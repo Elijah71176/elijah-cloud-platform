@@ -28,7 +28,6 @@ export default function RequestPage() {
 
   try {
      
-     // const res = await fetch("http://localhost:3001/request",
      const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
