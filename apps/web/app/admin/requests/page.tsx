@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+type RequestStatus =
+  | "pending"
+  | "converted"
+  | "temporarily_closed"
+  | "closed";
+
 type ServiceRequest = {
   id: string;
   name: string;
@@ -9,8 +15,8 @@ type ServiceRequest = {
   service: string;
   telephone?: string;
   message: string;
+  status: RequestStatus;
   createdAt: string;
-  status: "pending" | "converted" | "closed";
 };
 
 export default function AdminRequestsPage() {
@@ -30,7 +36,7 @@ export default function AdminRequestsPage() {
           throw new Error("Failed to load service requests");
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as ServiceRequest[];
         setRequests(data);
       } catch {
         setError("Could not load service requests.");
@@ -42,7 +48,35 @@ export default function AdminRequestsPage() {
     loadRequests();
   }, [API_URL]);
 
+  async function updateRequestStatus(
+    id: string,
+    status: RequestStatus
+  ): Promise<boolean> {
+    const response = await fetch(`${API_URL}/request/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      alert("Could not update request status.");
+      return false;
+    }
+
+    setRequests((currentRequests) =>
+      currentRequests.map((request) =>
+        request.id === id ? { ...request, status } : request
+      )
+    );
+
+    return true;
+  }
+
   async function convertToCustomer(request: ServiceRequest) {
+    if (request.status !== "pending") return;
+
     const customerResponse = await fetch(`${API_URL}/customers`, {
       method: "POST",
       headers: {
@@ -61,33 +95,29 @@ export default function AdminRequestsPage() {
       return;
     }
 
-    const statusResponse = await fetch(
-      `${API_URL}/request/${request.id}/status`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "converted",
-        }),
-      }
-    );
+    const updated = await updateRequestStatus(request.id, "converted");
 
-    if (!statusResponse.ok) {
-      alert("Customer created, but request status was not updated.");
-      return;
+    if (updated) {
+      alert("Request converted to customer.");
     }
+  }
 
-    setRequests((currentRequests) =>
-      currentRequests.map((item) =>
-        item.id === request.id
-          ? { ...item, status: "converted" }
-          : item
-      )
+  async function temporarilyCloseRequest(id: string) {
+    await updateRequestStatus(id, "temporarily_closed");
+  }
+
+  async function reopenRequest(id: string) {
+    await updateRequestStatus(id, "pending");
+  }
+
+  async function permanentlyCloseRequest(id: string) {
+    const confirmed = window.confirm(
+      "Permanently close this request? It cannot be reopened from this page."
     );
 
-    alert("Request converted to customer.");
+    if (!confirmed) return;
+
+    await updateRequestStatus(id, "closed");
   }
 
   return (
@@ -102,15 +132,14 @@ export default function AdminRequestsPage() {
 
       <p>Review requests submitted from the public website.</p>
       <p>
-        You can convert a request to a customer profile after reviewing it.
+        Convert requests to customers, pause them temporarily, reopen them, or
+        close them permanently.
       </p>
 
       {loading && <p>Loading requests...</p>}
 
       {error && (
-        <p style={{ color: "crimson", fontWeight: "bold" }}>
-          {error}
-        </p>
+        <p style={{ color: "crimson", fontWeight: "bold" }}>{error}</p>
       )}
 
       {!loading && !error && requests.length === 0 && (
@@ -134,7 +163,7 @@ export default function AdminRequestsPage() {
               padding: 18,
             }}
           >
-            <h2>{request.name}</h2>
+            <h2 style={{ marginTop: 0 }}>{request.name}</h2>
 
             <p>
               <strong>Email:</strong> {request.email}
@@ -153,34 +182,142 @@ export default function AdminRequestsPage() {
               <strong>Message:</strong> {request.message}
             </p>
 
+            <p>
+              <strong>Status:</strong>{" "}
+              {request.status.replaceAll("_", " ")}
+            </p>
+
             <p style={{ color: "#64748b" }}>
               Submitted: {new Date(request.createdAt).toLocaleString()}
             </p>
 
-            <button
-              onClick={() => convertToCustomer(request)}
-              disabled={request.status === "converted"}
+            <div
               style={{
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
                 marginTop: 12,
-                padding: "10px 14px",
-                background:
-                  request.status === "converted"
-                    ? "#16a34a"
-                    : "#2563eb",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                cursor:
-                  request.status === "converted"
-                    ? "not-allowed"
-                    : "pointer",
-                fontWeight: "bold",
               }}
             >
-              {request.status === "converted"
-                ? "Converted"
-                : "Convert to Customer"}
-            </button>
+              {request.status === "pending" && (
+                <>
+                  <button
+                    onClick={() => convertToCustomer(request)}
+                    style={{
+                      padding: "10px 14px",
+                      background: "#2563eb",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Convert to Customer
+                  </button>
+
+                  <button
+                    onClick={() => temporarilyCloseRequest(request.id)}
+                    style={{
+                      padding: "10px 14px",
+                      background: "#d97706",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Temporarily Close
+                  </button>
+                </>
+              )}
+
+              {request.status === "converted" && (
+                <>
+                  <button
+                    disabled
+                    style={{
+                      padding: "10px 14px",
+                      background: "#16a34a",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "not-allowed",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Converted
+                  </button>
+
+                  <button
+                    onClick={() => temporarilyCloseRequest(request.id)}
+                    style={{
+                      padding: "10px 14px",
+                      background: "#d97706",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Temporarily Close
+                  </button>
+                </>
+              )}
+
+              {request.status === "temporarily_closed" && (
+                <>
+                  <button
+                    onClick={() => reopenRequest(request.id)}
+                    style={{
+                      padding: "10px 14px",
+                      background: "#2563eb",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Reopen Request
+                  </button>
+
+                  <button
+                    onClick={() => permanentlyCloseRequest(request.id)}
+                    style={{
+                      padding: "10px 14px",
+                      background: "#dc2626",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Close Permanently
+                  </button>
+                </>
+              )}
+
+              {request.status === "closed" && (
+                <button
+                  disabled
+                  style={{
+                    padding: "10px 14px",
+                    background: "#64748b",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "not-allowed",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Permanently Closed
+                </button>
+              )}
+            </div>
           </article>
         ))}
       </div>

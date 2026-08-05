@@ -26,7 +26,7 @@ export class ServiceRequest {
   message!: string;
 
   @Column({ default: 'pending' })
-status!: 'pending' | 'converted' | 'closed';
+  status!: 'pending' | 'converted' | 'temporarily_closed' | 'closed';
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -31,7 +31,7 @@ export class RequestService {
 
   async updateStatus(
   id: string,
-  status: 'pending' | 'converted' | 'closed',
+  status: 'pending' | 'converted' | 'temporarily_closed' | 'closed',
 ) {
   const request = await this.requestRepository.findOne({
     where: { id },
