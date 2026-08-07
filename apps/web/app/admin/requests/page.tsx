@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 type RequestStatus =
   | "pending"
-  | "converted"
   | "temporarily_closed"
   | "closed";
 
@@ -16,6 +15,7 @@ type ServiceRequest = {
   telephone?: string;
   message: string;
   status: RequestStatus;
+  converted: boolean;
   createdAt: string;
 };
 
@@ -67,7 +67,9 @@ export default function AdminRequestsPage() {
 
     setRequests((currentRequests) =>
       currentRequests.map((request) =>
-        request.id === id ? { ...request, status } : request
+        request.id === id
+          ? { ...request, status }
+          : request
       )
     );
 
@@ -75,7 +77,9 @@ export default function AdminRequestsPage() {
   }
 
   async function convertToCustomer(request: ServiceRequest) {
-    if (request.status !== "pending") return;
+    if (request.converted) {
+      return;
+    }
 
     const customerResponse = await fetch(`${API_URL}/customers`, {
       method: "POST",
@@ -95,11 +99,29 @@ export default function AdminRequestsPage() {
       return;
     }
 
-    const updated = await updateRequestStatus(request.id, "converted");
+    const convertResponse = await fetch(
+      `${API_URL}/request/${request.id}/convert`,
+      {
+        method: "PATCH",
+      }
+    );
 
-    if (updated) {
-      alert("Request converted to customer.");
+    if (!convertResponse.ok) {
+      alert(
+        "Customer created, but request conversion was not recorded."
+      );
+      return;
     }
+
+    setRequests((currentRequests) =>
+      currentRequests.map((item) =>
+        item.id === request.id
+          ? { ...item, converted: true }
+          : item
+      )
+    );
+
+    alert("Request converted to customer.");
   }
 
   async function temporarilyCloseRequest(id: string) {
@@ -131,15 +153,23 @@ export default function AdminRequestsPage() {
       <h1>Service Request Management</h1>
 
       <p>Review requests submitted from the public website.</p>
+
       <p>
-        Convert requests to customers, pause them temporarily, reopen them, or
-        close them permanently.
+        Convert requests to customers, pause them temporarily,
+        reopen them, or close them permanently.
       </p>
 
       {loading && <p>Loading requests...</p>}
 
       {error && (
-        <p style={{ color: "crimson", fontWeight: "bold" }}>{error}</p>
+        <p
+          style={{
+            color: "crimson",
+            fontWeight: "bold",
+          }}
+        >
+          {error}
+        </p>
       )}
 
       {!loading && !error && requests.length === 0 && (
@@ -163,7 +193,9 @@ export default function AdminRequestsPage() {
               padding: 18,
             }}
           >
-            <h2 style={{ marginTop: 0 }}>{request.name}</h2>
+            <h2 style={{ marginTop: 0 }}>
+              {request.name}
+            </h2>
 
             <p>
               <strong>Email:</strong> {request.email}
@@ -187,8 +219,22 @@ export default function AdminRequestsPage() {
               {request.status.replaceAll("_", " ")}
             </p>
 
-            <p style={{ color: "#64748b" }}>
-              Submitted: {new Date(request.createdAt).toLocaleString()}
+            <p>
+              <strong>Customer:</strong>{" "}
+              {request.converted
+                ? "Converted"
+                : "Not converted"}
+            </p>
+
+            <p
+              style={{
+                color: "#64748b",
+              }}
+            >
+              Submitted:{" "}
+              {new Date(
+                request.createdAt
+              ).toLocaleString()}
             </p>
 
             <div
@@ -199,10 +245,13 @@ export default function AdminRequestsPage() {
                 marginTop: 12,
               }}
             >
-              {request.status === "pending" && (
-                <>
+              {/* Convert button */}
+              {!request.converted &&
+                request.status === "pending" && (
                   <button
-                    onClick={() => convertToCustomer(request)}
+                    onClick={() =>
+                      convertToCustomer(request)
+                    }
                     style={{
                       padding: "10px 14px",
                       background: "#2563eb",
@@ -215,62 +264,56 @@ export default function AdminRequestsPage() {
                   >
                     Convert to Customer
                   </button>
+                )}
 
-                  <button
-                    onClick={() => temporarilyCloseRequest(request.id)}
-                    style={{
-                      padding: "10px 14px",
-                      background: "#d97706",
-                      color: "white",
-                      border: "none",
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Temporarily Close
-                  </button>
-                </>
+              {/* Already converted */}
+              {request.converted && (
+                <button
+                  disabled
+                  style={{
+                    padding: "10px 14px",
+                    background: "#16a34a",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "not-allowed",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Converted
+                </button>
               )}
 
-              {request.status === "converted" && (
-                <>
-                  <button
-                    disabled
-                    style={{
-                      padding: "10px 14px",
-                      background: "#16a34a",
-                      color: "white",
-                      border: "none",
-                      borderRadius: 8,
-                      cursor: "not-allowed",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Converted
-                  </button>
-
-                  <button
-                    onClick={() => temporarilyCloseRequest(request.id)}
-                    style={{
-                      padding: "10px 14px",
-                      background: "#d97706",
-                      color: "white",
-                      border: "none",
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Temporarily Close
-                  </button>
-                </>
+              {/* Pending */}
+              {request.status === "pending" && (
+                <button
+                  onClick={() =>
+                    temporarilyCloseRequest(
+                      request.id
+                    )
+                  }
+                  style={{
+                    padding: "10px 14px",
+                    background: "#d97706",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Temporarily Close
+                </button>
               )}
 
-              {request.status === "temporarily_closed" && (
+              {/* Temporarily closed */}
+              {request.status ===
+                "temporarily_closed" && (
                 <>
                   <button
-                    onClick={() => reopenRequest(request.id)}
+                    onClick={() =>
+                      reopenRequest(request.id)
+                    }
                     style={{
                       padding: "10px 14px",
                       background: "#2563eb",
@@ -285,7 +328,11 @@ export default function AdminRequestsPage() {
                   </button>
 
                   <button
-                    onClick={() => permanentlyCloseRequest(request.id)}
+                    onClick={() =>
+                      permanentlyCloseRequest(
+                        request.id
+                      )
+                    }
                     style={{
                       padding: "10px 14px",
                       background: "#dc2626",
@@ -301,6 +348,7 @@ export default function AdminRequestsPage() {
                 </>
               )}
 
+              {/* Permanently closed */}
               {request.status === "closed" && (
                 <button
                   disabled

@@ -31,7 +31,7 @@ export class RequestService {
 
   async updateStatus(
   id: string,
-  status: 'pending' | 'converted' | 'temporarily_closed' | 'closed',
+  status: 'pending' | 'temporarily_closed' | 'closed',
 ) {
   const request = await this.requestRepository.findOne({
     where: { id },
@@ -45,4 +45,18 @@ export class RequestService {
 
   return this.requestRepository.save(request);
 }
+async markConverted(id: string) {
+  const request = await this.requestRepository.findOne({
+    where: { id },
+  });
+
+  if (!request) {
+    throw new Error('Service request not found');
+  }
+
+  request.converted = true;
+
+  return this.requestRepository.save(request);
+}
+
 }

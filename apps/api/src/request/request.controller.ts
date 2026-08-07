@@ -23,4 +23,8 @@ updateStatus(
 ) {
   return this.requestService.updateStatus(id, dto.status);
 }
+@Patch(':id/convert')
+markConverted(@Param('id') id: string) {
+  return this.requestService.markConverted(id);
+}
 }
