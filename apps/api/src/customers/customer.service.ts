@@ -1,6 +1,10 @@
 
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Customer } from './customers.entity';
@@ -12,20 +16,20 @@ export class CustomerService {
   constructor(
     @InjectRepository(Customer)
     private readonly customerRepo: Repository<Customer>,
-  ) {}
+  ) { }
 
   findAll() {
-  return this.customerRepo.find({ relations: { projects: true } });
-}
+    return this.customerRepo.find({ relations: { projects: true } });
+  }
 
-async findOne(id: string) {
-  const customer = await this.customerRepo.findOne({
-    where: { id },
-    relations: { projects: true },
-  });
-  if (!customer) throw new NotFoundException(`Customer ${id} not found`);
-  return customer;
-}
+  async findOne(id: string) {
+    const customer = await this.customerRepo.findOne({
+      where: { id },
+      relations: { projects: true },
+    });
+    if (!customer) throw new NotFoundException(`Customer ${id} not found`);
+    return customer;
+  }
 
 
   create(dto: CreateCustomerDto) {
@@ -41,7 +45,16 @@ async findOne(id: string) {
 
   async remove(id: string) {
     const customer = await this.findOne(id);
+
+    if (customer.projects && customer.projects.length > 0) {
+      throw new ConflictException(
+        'Customer cannot be deleted because they still have projects',
+      );
+    }
+
     await this.customerRepo.remove(customer);
+
     return { deleted: true };
+
   }
 }

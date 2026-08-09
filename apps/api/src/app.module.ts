@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { CustomerModule } from './customers/customer.module';
 import { ProjectsModule } from './projects/projects.module';
 import { RequestModule } from './request/request.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 const isAwsRds =
   process.env.DATABASE_URL?.includes('rds.amazonaws.com') ?? false;
@@ -28,6 +29,7 @@ const isAwsRds =
     CustomerModule,
     ProjectsModule,
     RequestModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

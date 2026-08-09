@@ -52,8 +52,20 @@ export default function AdminCustomersPage() {
       method: "DELETE",
     });
 
-    if (!response.ok && response.status !== 204) {
-      alert("Could not delete customer.");
+    if (!response.ok) {
+      let message = "Could not delete customer.";
+
+      try {
+        const data = await response.json();
+
+        if (data?.message) {
+          message = data.message;
+        }
+      } catch {
+        // keep default message
+      }
+
+      alert(message);
       return;
     }
 
@@ -61,7 +73,6 @@ export default function AdminCustomersPage() {
       currentCustomers.filter((customer) => customer.id !== id)
     );
   }
-
   return (
     <main
       style={{
@@ -136,7 +147,7 @@ export default function AdminCustomersPage() {
               Edit
             </Link>
             <button
-            
+
               onClick={() => deleteCustomer(customer.id)}
               style={{
                 marginLeft: 14,
