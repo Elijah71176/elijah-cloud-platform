@@ -14,15 +14,15 @@ export class ProjectsService {
     private readonly projectRepo: Repository<Project>,
     @InjectRepository(Customer)
     private readonly customerRepo: Repository<Customer>,
-  ) {}
+  ) { }
 
   async findOne(id: string) { // Find a project by ID
-  const project = await this.projectRepo.findOne({ where: { id } });
-  if (!project) {
-    throw new NotFoundException(`Project ${id} not found`);
+    const project = await this.projectRepo.findOne({ where: { id } });
+    if (!project) {
+      throw new NotFoundException(`Project ${id} not found`);
+    }
+    return project;
   }
-  return project;
-}
 
 
   findAll() {
@@ -37,13 +37,16 @@ export class ProjectsService {
       title: dto.title,
       status: dto.status,
       customerId: dto.customerId,
+      description: dto.description,
+      startDate: dto.startDate,
+      dueDate: dto.dueDate,
     });
 
     return this.projectRepo.save(project);
   }
-findByCustomer(customerId: string) {
-  return this.projectRepo.find({ where: { customerId } });
-} 
+  findByCustomer(customerId: string) {
+    return this.projectRepo.find({ where: { customerId } });
+  }
 
   async update(id: string, dto: UpdateProjectDto) {
     const project = await this.projectRepo.findOne({ where: { id } });

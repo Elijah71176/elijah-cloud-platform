@@ -9,6 +9,9 @@ type Project = {
   title: string;
   status: 'planned' | 'active' | 'on_hold' | 'done';
   customerId: string;
+  description?: string | null;
+  startDate?: string | null;
+  dueDate?: string | null;
 };
 
 type Customer = {
@@ -17,7 +20,8 @@ type Customer = {
   email: string;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 function statusStyle(status: Project['status']) {
   if (status === 'done') {
@@ -35,11 +39,12 @@ function statusStyle(status: Project['status']) {
       border: '1px solid #bfdbfe',
     };
   }
-  if (status === "on_hold") {
+
+  if (status === 'on_hold') {
     return {
-      background: "#f3e8ff",
-      color: "#7e22ce",
-      border: "1px solid #e9d5ff",
+      background: '#f3e8ff',
+      color: '#7e22ce',
+      border: '1px solid #e9d5ff',
     };
   }
 
@@ -54,15 +59,15 @@ export default function ProjectsPage() {
   const router = useRouter();
 
   const [authorized, setAuthorized] = useState(false);
-
   const [projects, setProjects] = useState<Project[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ADMIN AUTH CHECK
   useEffect(() => {
-    const isAdmin = localStorage.getItem('elijah-cloud-platform-admin');
+    const isAdmin = localStorage.getItem(
+      'elijah-cloud-platform-admin'
+    );
 
     if (isAdmin !== 'true') {
       router.push('/admin/login');
@@ -72,7 +77,6 @@ export default function ProjectsPage() {
     setAuthorized(true);
   }, [router]);
 
-  // LOAD DATA
   useEffect(() => {
     async function load() {
       setError(null);
@@ -84,8 +88,13 @@ export default function ProjectsPage() {
           fetch(`${API_URL}/customers`),
         ]);
 
-        if (!pRes.ok) throw new Error(await pRes.text());
-        if (!cRes.ok) throw new Error(await cRes.text());
+        if (!pRes.ok) {
+          throw new Error(await pRes.text());
+        }
+
+        if (!cRes.ok) {
+          throw new Error(await cRes.text());
+        }
 
         setProjects((await pRes.json()) as Project[]);
         setCustomers((await cRes.json()) as Customer[]);
@@ -110,12 +119,13 @@ export default function ProjectsPage() {
     total: projects.length,
     planned: projects.filter((p) => p.status === 'planned').length,
     active: projects.filter((p) => p.status === 'active').length,
-    onHold: projects.filter((p) => p.status === "on_hold").length,
+    onHold: projects.filter((p) => p.status === 'on_hold').length,
     done: projects.filter((p) => p.status === 'done').length,
   };
 
   async function deleteProject(id: string) {
     const ok = confirm('Delete this project?');
+
     if (!ok) return;
 
     const res = await fetch(`${API_URL}/projects/${id}`, {
@@ -127,7 +137,9 @@ export default function ProjectsPage() {
       return;
     }
 
-    setProjects((prev) => prev.filter((p) => p.id !== id));
+    setProjects((prev) =>
+      prev.filter((p) => p.id !== id)
+    );
   }
 
   if (!authorized) {
@@ -146,7 +158,12 @@ export default function ProjectsPage() {
         padding: '40px 24px',
       }}
     >
-      <section style={{ maxWidth: 1180, margin: '0 auto' }}>
+      <section
+        style={{
+          maxWidth: 1400,
+          margin: '0 auto',
+        }}
+      >
         <div
           style={{
             display: 'flex',
@@ -158,20 +175,41 @@ export default function ProjectsPage() {
           }}
         >
           <div>
-            <p style={{ margin: 0, color: '#2563eb', fontWeight: 800 }}>
+            <p
+              style={{
+                margin: 0,
+                color: '#2563eb',
+                fontWeight: 800,
+              }}
+            >
               Elijah Cloud Platform
             </p>
 
-            <h1 style={{ margin: '6px 0', fontSize: 38 }}>
+            <h1
+              style={{
+                margin: '6px 0',
+                fontSize: 38,
+              }}
+            >
               Project Dashboard
             </h1>
 
-            <p style={{ margin: 0, color: '#64748b' }}>
+            <p
+              style={{
+                margin: 0,
+                color: '#64748b',
+              }}
+            >
               View, manage and track customer projects.
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 12,
+            }}
+          >
             <Link
               href="/projects/new"
               style={{
@@ -188,7 +226,9 @@ export default function ProjectsPage() {
 
             <button
               onClick={() => {
-                localStorage.removeItem('elijah-cloud-platform-admin');
+                localStorage.removeItem(
+                  'elijah-cloud-platform-admin'
+                );
                 router.push('/admin/login');
               }}
               style={{
@@ -208,7 +248,8 @@ export default function ProjectsPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gridTemplateColumns:
+              'repeat(auto-fit, minmax(180px, 1fr))',
             gap: 16,
             marginBottom: 24,
           }}
@@ -227,10 +268,16 @@ export default function ProjectsPage() {
                 border: '1px solid #e2e8f0',
                 borderRadius: 16,
                 padding: 18,
-                boxShadow: '0 10px 25px rgba(15,23,42,0.06)',
+                boxShadow:
+                  '0 10px 25px rgba(15,23,42,0.06)',
               }}
             >
-              <div style={{ color: '#64748b', fontWeight: 700 }}>
+              <div
+                style={{
+                  color: '#64748b',
+                  fontWeight: 700,
+                }}
+              >
                 {label}
               </div>
 
@@ -253,13 +300,19 @@ export default function ProjectsPage() {
             border: '1px solid #e2e8f0',
             borderRadius: 18,
             padding: 22,
-            boxShadow: '0 10px 30px rgba(15,23,42,0.08)',
+            boxShadow:
+              '0 10px 30px rgba(15,23,42,0.08)',
           }}
         >
           {loading && <div>Loading projects…</div>}
 
           {!loading && error && (
-            <div style={{ color: 'crimson', fontWeight: 800 }}>
+            <div
+              style={{
+                color: 'crimson',
+                fontWeight: 800,
+              }}
+            >
               {error}
             </div>
           )}
@@ -274,13 +327,25 @@ export default function ProjectsPage() {
               >
                 <thead>
                   <tr>
-                    {['Title', 'Status', 'Customer', 'Actions'].map((h) => (
+                    {[
+                      'Title',
+                      'Description',
+                      'Status',
+                      'Start Date',
+                      'Due Date',
+                      'Customer',
+                      'Actions',
+                    ].map((h) => (
                       <th
                         key={h}
                         style={{
-                          textAlign: h === 'Actions' ? 'right' : 'left',
+                          textAlign:
+                            h === 'Actions'
+                              ? 'right'
+                              : 'left',
                           padding: 12,
-                          borderBottom: '1px solid #e2e8f0',
+                          borderBottom:
+                            '1px solid #e2e8f0',
                           fontSize: 13,
                           color: '#475569',
                           textTransform: 'uppercase',
@@ -295,7 +360,9 @@ export default function ProjectsPage() {
 
                 <tbody>
                   {projects.map((p) => {
-                    const c = customerMap.get(p.customerId);
+                    const c = customerMap.get(
+                      p.customerId
+                    );
 
                     const customerLabel = c
                       ? `${c.name} (${c.email})`
@@ -306,10 +373,15 @@ export default function ProjectsPage() {
                         <td
                           style={{
                             padding: 12,
-                            borderBottom: '1px solid #f1f5f9',
+                            borderBottom:
+                              '1px solid #f1f5f9',
                           }}
                         >
-                          <div style={{ fontWeight: 900 }}>
+                          <div
+                            style={{
+                              fontWeight: 900,
+                            }}
+                          >
                             {p.title}
                           </div>
 
@@ -326,38 +398,92 @@ export default function ProjectsPage() {
                         <td
                           style={{
                             padding: 12,
-                            borderBottom: '1px solid #f1f5f9',
+                            borderBottom:
+                              '1px solid #f1f5f9',
+                            maxWidth: 260,
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: '#475569',
+                              lineHeight: 1.5,
+                              whiteSpace: 'normal',
+                            }}
+                          >
+                            {p.description ||
+                              'No description'}
+                          </div>
+                        </td>
+
+                        <td
+                          style={{
+                            padding: 12,
+                            borderBottom:
+                              '1px solid #f1f5f9',
                           }}
                         >
                           <span
                             style={{
-                              ...statusStyle(p.status),
+                              ...statusStyle(
+                                p.status
+                              ),
                               display: 'inline-flex',
                               padding: '5px 11px',
                               borderRadius: 999,
                               fontSize: 12,
                               fontWeight: 900,
-                              textTransform: 'uppercase',
+                              textTransform:
+                                'uppercase',
                             }}
                           >
-                            {p.status}
+                            {p.status.replaceAll(
+                              '_',
+                              ' '
+                            )}
                           </span>
                         </td>
 
                         <td
                           style={{
                             padding: 12,
-                            borderBottom: '1px solid #f1f5f9',
+                            borderBottom:
+                              '1px solid #f1f5f9',
+                            whiteSpace: 'nowrap',
                           }}
                         >
-                          <strong>{customerLabel}</strong>
+                          {p.startDate || 'Not set'}
                         </td>
 
                         <td
                           style={{
                             padding: 12,
-                            borderBottom: '1px solid #f1f5f9',
+                            borderBottom:
+                              '1px solid #f1f5f9',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {p.dueDate || 'Not set'}
+                        </td>
+
+                        <td
+                          style={{
+                            padding: 12,
+                            borderBottom:
+                              '1px solid #f1f5f9',
+                          }}
+                        >
+                          <strong>
+                            {customerLabel}
+                          </strong>
+                        </td>
+
+                        <td
+                          style={{
+                            padding: 12,
+                            borderBottom:
+                              '1px solid #f1f5f9',
                             textAlign: 'right',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           <Link
@@ -373,9 +499,12 @@ export default function ProjectsPage() {
                           </Link>
 
                           <button
-                            onClick={() => deleteProject(p.id)}
+                            onClick={() =>
+                              deleteProject(p.id)
+                            }
                             style={{
-                              border: '1px solid #fecaca',
+                              border:
+                                '1px solid #fecaca',
                               background: '#fff1f2',
                               color: '#be123c',
                               borderRadius: 10,
@@ -393,11 +522,21 @@ export default function ProjectsPage() {
 
                   {projects.length === 0 && (
                     <tr>
-                      <td colSpan={4} style={{ padding: 18 }}>
-                        <strong>No projects yet.</strong>
+                      <td
+                        colSpan={7}
+                        style={{ padding: 18 }}
+                      >
+                        <strong>
+                          No projects yet.
+                        </strong>
 
-                        <div style={{ color: '#64748b' }}>
-                          Click New Project to create one.
+                        <div
+                          style={{
+                            color: '#64748b',
+                          }}
+                        >
+                          Click New Project to create
+                          one.
                         </div>
                       </td>
                     </tr>
