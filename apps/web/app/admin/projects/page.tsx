@@ -7,7 +7,7 @@ import Link from 'next/link';
 type Project = {
   id: string;
   title: string;
-  status: 'planned' | 'active' | 'done';
+  status: 'planned' | 'active' | 'on_hold' | 'done';
   customerId: string;
 };
 
@@ -35,6 +35,13 @@ function statusStyle(status: Project['status']) {
       border: '1px solid #bfdbfe',
     };
   }
+  if (status === "on_hold") {
+    return {
+      background: "#f3e8ff",
+      color: "#7e22ce",
+      border: "1px solid #e9d5ff",
+    };
+  }
 
   return {
     background: '#fef3c7',
@@ -55,7 +62,7 @@ export default function ProjectsPage() {
 
   // ADMIN AUTH CHECK
   useEffect(() => {
-  const isAdmin = localStorage.getItem('elijah-cloud-platform-admin');
+    const isAdmin = localStorage.getItem('elijah-cloud-platform-admin');
 
     if (isAdmin !== 'true') {
       router.push('/admin/login');
@@ -103,6 +110,7 @@ export default function ProjectsPage() {
     total: projects.length,
     planned: projects.filter((p) => p.status === 'planned').length,
     active: projects.filter((p) => p.status === 'active').length,
+    onHold: projects.filter((p) => p.status === "on_hold").length,
     done: projects.filter((p) => p.status === 'done').length,
   };
 
@@ -151,7 +159,7 @@ export default function ProjectsPage() {
         >
           <div>
             <p style={{ margin: 0, color: '#2563eb', fontWeight: 800 }}>
-             Elijah Cloud Platform
+              Elijah Cloud Platform
             </p>
 
             <h1 style={{ margin: '6px 0', fontSize: 38 }}>
@@ -209,6 +217,7 @@ export default function ProjectsPage() {
             ['Total Projects', stats.total],
             ['Planned', stats.planned],
             ['Active', stats.active],
+            ['On Hold', stats.onHold],
             ['Done', stats.done],
           ].map(([label, value]) => (
             <div

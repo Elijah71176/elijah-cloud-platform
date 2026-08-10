@@ -5,6 +5,7 @@ import { Customer } from '../customers/customers.entity';
 export enum ProjectStatus {
   PLANNED = 'planned',
   ACTIVE = 'active',
+  ON_HOLD = 'on_hold',
   DONE = 'done',
 }
 
@@ -12,24 +13,24 @@ export enum ProjectStatus {
 @Entity()
 export class Project {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({
     type: 'varchar',
     enum: ProjectStatus,
     default: ProjectStatus.PLANNED,
   })
-  status: ProjectStatus;
+  status!: ProjectStatus;
 
   @ManyToOne(() => Customer, (customer) => customer.projects, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'customerId' })
-  customer: Customer;
+  customer!: Customer;
 
   @Column()
-  customerId: string;
+  customerId!: string;
 }

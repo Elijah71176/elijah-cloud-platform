@@ -3,10 +3,10 @@ import { ProjectStatus } from '../project.entity';
 
 export class CreateProjectDto {
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @IsUUID()
-  customerId: string;
+  customerId!: string;
 
   @IsOptional()
   @IsEnum(ProjectStatus)
