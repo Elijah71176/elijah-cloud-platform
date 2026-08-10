@@ -154,6 +154,14 @@ export default function ProjectsPage() {
     active: projects.filter((p) => p.status === 'active').length,
     onHold: projects.filter((p) => p.status === 'on_hold').length,
     done: projects.filter((p) => p.status === 'done').length,
+
+    overdue: projects.filter(
+      (p) => getDeadlineStatus(p) === 'overdue'
+    ).length,
+
+    dueSoon: projects.filter(
+      (p) => getDeadlineStatus(p) === 'due_soon'
+    ).length,
   };
   const filteredProjects = projects.filter((project) => {
     const customer = customerMap.get(project.customerId);
@@ -304,6 +312,8 @@ export default function ProjectsPage() {
             ['Planned', stats.planned],
             ['Active', stats.active],
             ['On Hold', stats.onHold],
+            ['Overdue', stats.overdue],
+            ['Due Soon', stats.dueSoon],
             ['Done', stats.done],
           ].map(([label, value]) => (
             <div
