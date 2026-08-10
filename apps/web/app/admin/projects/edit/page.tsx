@@ -77,6 +77,7 @@ function EditProjectForm() {
         >
           <option value="planned">Planned</option>
           <option value="active">Active</option>
+          <option value="on_hold">On Hold</option>
           <option value="done">Done</option>
         </select>
       </div>
