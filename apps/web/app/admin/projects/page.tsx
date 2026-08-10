@@ -63,6 +63,9 @@ export default function ProjectsPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] =
+    useState<'all' | Project['status']>('all');
 
   useEffect(() => {
     const isAdmin = localStorage.getItem(
@@ -122,7 +125,19 @@ export default function ProjectsPage() {
     onHold: projects.filter((p) => p.status === 'on_hold').length,
     done: projects.filter((p) => p.status === 'done').length,
   };
+  const filteredProjects = projects.filter((project) => {
+    const customer = customerMap.get(project.customerId);
 
+    const matchesSearch =
+      project.title.toLowerCase().includes(search.toLowerCase()) ||
+      customer?.name.toLowerCase().includes(search.toLowerCase()) ||
+      customer?.email.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' || project.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
   async function deleteProject(id: string) {
     const ok = confirm('Delete this project?');
 
@@ -316,6 +331,54 @@ export default function ProjectsPage() {
               {error}
             </div>
           )}
+          {/* Project Search and Filter */}
+          {!loading && !error && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 12,
+                marginBottom: 20,
+                flexWrap: 'wrap',
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Search project or customer..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: 240,
+                  padding: '11px 14px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 10,
+                  fontSize: 14,
+                }}
+              />
+
+              <select
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(
+                    e.target.value as 'all' | Project['status']
+                  )
+                }
+                style={{
+                  padding: '11px 14px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 10,
+                  background: 'white',
+                  fontWeight: 700,
+                }}
+              >
+                <option value="all">All Statuses</option>
+                <option value="planned">Planned</option>
+                <option value="active">Active</option>
+                <option value="on_hold">On Hold</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          )}
 
           {!loading && !error && (
             <div style={{ overflowX: 'auto' }}>
@@ -359,7 +422,7 @@ export default function ProjectsPage() {
                 </thead>
 
                 <tbody>
-                  {projects.map((p) => {
+                  {filteredProjects.map((p) => {
                     const c = customerMap.get(
                       p.customerId
                     );
@@ -520,26 +583,25 @@ export default function ProjectsPage() {
                     );
                   })}
 
-                  {projects.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        style={{ padding: 18 }}
-                      >
-                        <strong>
-                          No projects yet.
-                        </strong>
+                  {filteredProjects.length === 0 && (<tr>
+                    <td
+                      colSpan={7}
+                      style={{ padding: 18 }}
+                    >
+                      <strong>
+                        No projects yet.
+                      </strong>
 
-                        <div
-                          style={{
-                            color: '#64748b',
-                          }}
-                        >
-                          Click New Project to create
-                          one.
-                        </div>
-                      </td>
-                    </tr>
+                      <div
+                        style={{
+                          color: '#64748b',
+                        }}
+                      >
+                        Click New Project to create
+                        one.
+                      </div>
+                    </td>
+                  </tr>
                   )}
                 </tbody>
               </table>
