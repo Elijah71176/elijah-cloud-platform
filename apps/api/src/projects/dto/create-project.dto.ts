@@ -1,5 +1,6 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ProjectStatus } from '../project.entity';
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+
 
 export class CreateProjectDto {
   @IsNotEmpty()
@@ -11,4 +12,16 @@ export class CreateProjectDto {
   @IsOptional()
   @IsEnum(ProjectStatus)
   status?: ProjectStatus;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
 }

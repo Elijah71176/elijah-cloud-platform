@@ -18,6 +18,15 @@ export class Project {
   @Column()
   title!: string;
 
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
+  @Column({ type: 'date', nullable: true })
+  startDate?: string;
+
+  @Column({ type: 'date', nullable: true })
+  dueDate?: string;
+
   @Column({
     type: 'varchar',
     enum: ProjectStatus,
