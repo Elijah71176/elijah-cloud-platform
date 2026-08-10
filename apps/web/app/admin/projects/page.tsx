@@ -53,7 +53,37 @@ function statusStyle(status: Project['status']) {
     color: '#92400e',
     border: '1px solid #fde68a',
   };
+
 }
+
+function getDeadlineStatus(project: Project) {
+  if (!project.dueDate || project.status === 'done') {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dueDate = new Date(`${project.dueDate}T00:00:00`);
+
+
+
+  const differenceInDays = Math.ceil(
+    (dueDate.getTime() - today.getTime()) /
+    (1000 * 60 * 60 * 24)
+  );
+
+  if (differenceInDays < 0) {
+    return 'overdue';
+  }
+
+  if (differenceInDays <= 7) {
+    return 'due_soon';
+  }
+
+  return null;
+}
+
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -514,7 +544,43 @@ export default function ProjectsPage() {
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {p.startDate || 'Not set'}
+                          <div>
+                            <div>{p.dueDate || 'Not set'}</div>
+
+                            {getDeadlineStatus(p) === 'overdue' && (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  marginTop: 5,
+                                  padding: '4px 8px',
+                                  borderRadius: 999,
+                                  background: '#fee2e2',
+                                  color: '#b91c1c',
+                                  fontSize: 11,
+                                  fontWeight: 900,
+                                }}
+                              >
+                                OVERDUE
+                              </span>
+                            )}
+
+                            {getDeadlineStatus(p) === 'due_soon' && (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  marginTop: 5,
+                                  padding: '4px 8px',
+                                  borderRadius: 999,
+                                  background: '#fef3c7',
+                                  color: '#92400e',
+                                  fontSize: 11,
+                                  fontWeight: 900,
+                                }}
+                              >
+                                DUE SOON
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         <td
