@@ -15,8 +15,8 @@ export default function AdminLayout({
   const [authorized, setAuthorized] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Works with both /admin/login and /admin/login/
   const isLoginPage = pathname.startsWith("/admin/login");
+
 
   useEffect(() => {
     if (isLoginPage) {
@@ -83,6 +83,18 @@ export default function AdminLayout({
       </main>
     );
   }
+  function navLinkStyle(path: string) {
+    const active = pathname.startsWith(path);
+
+    return {
+      color: "white",
+      textDecoration: "none",
+      fontWeight: 700,
+      padding: "8px 12px",
+      borderRadius: 8,
+      background: active ? "#2563eb" : "transparent",
+    };
+  }
 
   return (
     <>
@@ -96,19 +108,28 @@ export default function AdminLayout({
           flexWrap: "wrap",
         }}
       >
-        <Link href="/admin/dashboard" style={linkStyle}>
+        <Link
+          href="/admin/dashboard"
+          style={navLinkStyle("/admin/dashboard")}
+        >
           Dashboard
         </Link>
 
-        <Link href="/admin/customers" style={linkStyle}>
+        <Link
+          href="/admin/customers"
+          style={navLinkStyle("/admin/customers")}
+        >
           Customers
         </Link>
 
-        <Link href="/admin/projects" style={linkStyle}>
+        <Link href="/admin/projects" style={navLinkStyle("/admin/projects")}>
           Projects
         </Link>
 
-        <Link href="/admin/requests" style={linkStyle}>
+        <Link
+          href="/admin/requests"
+          style={navLinkStyle("/admin/requests")}
+        >
           Service Requests
         </Link>
 
@@ -134,8 +155,3 @@ export default function AdminLayout({
   );
 }
 
-const linkStyle = {
-  color: "white",
-  textDecoration: "none",
-  fontWeight: 700,
-};

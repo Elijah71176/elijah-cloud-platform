@@ -410,6 +410,7 @@ export default function ProjectsPage() {
               <table
                 style={{
                   width: '100%',
+                  minWidth: 1000,
                   borderCollapse: 'collapse',
                 }}
               >
