@@ -23,9 +23,19 @@ export default function ContactPage() {
           {/* Email */}
           <div style={cardStyle}>
             <strong>Email</strong>
-            <p style={textStyle}>elijah71176@gmail.com</p>
+            <p style={textStyle}>
+              <a
+                href="mailto:elijah71176@gmail.com"
+                style={{
+                  textDecoration: "none",
+                  color: "#2563eb",
+                  fontWeight: 700,
+                }}
+              >
+                elijah71176@gmail.com
+              </a>
+            </p>
           </div>
-
           {/* Phone */}
           <div style={cardStyle}>
             <strong>Phone</strong>
@@ -91,9 +101,26 @@ export default function ContactPage() {
           <div style={cardStyle}>
             <strong>Role</strong>
             <p style={textStyle}>
-              AWS Cloud Developer Student / Junior Full-stack Developer
+              Junior AWS Cloud Developer / Full-Stack Developer
             </p>
+
           </div>
+        </div>
+        <div style={{ marginTop: 28 }}>
+          <a
+            href="/request"
+            style={{
+              display: "inline-block",
+              padding: "12px 18px",
+              background: "#2563eb",
+              color: "white",
+              borderRadius: 10,
+              textDecoration: "none",
+              fontWeight: 800,
+            }}
+          >
+            Request a Service
+          </a>
         </div>
       </section>
     </main>
