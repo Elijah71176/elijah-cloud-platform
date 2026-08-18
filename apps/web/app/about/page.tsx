@@ -138,27 +138,26 @@ export default function AboutPage() {
 
           <div style={grid}>
             <div style={card}>
-              <strong>AWS Cloud Development</strong>
+              <strong>AWS Cloud Developer</strong>
               <p style={textSmall}>
-                Higher Vocational Education in AWS Cloud Development from Jensen
-                Yrkehögskola, Sweden, with practical experience in cloud architecture,
-                backend development, deployment, and DevOps.
+                Higher Vocational Education Diploma — JENSEN yrkeshögskola,
+                Sweden. SeQF Level 5 / EQF Level 5.
               </p>
             </div>
 
             <div style={card}>
-              <strong>Cloud & DevOps Experience</strong>
+              <strong>Docker Basics for DevOps</strong>
               <p style={textSmall}>
-                Hands-on experience with AWS, Docker, GitHub Actions, CI/CD pipelines,
-                PostgreSQL, REST APIs, and cloud-based application deployment.
+                KodeKloud • Coursera
               </p>
             </div>
 
             <div style={card}>
-              <strong>Technical Background</strong>
+              <strong>
+                Operating Systems and You: Becoming a Power User
+              </strong>
               <p style={textSmall}>
-                Experience across backend, frontend, cloud infrastructure, technical
-                support, and practical problem-solving in real working environments.
+                Google • Coursera
               </p>
             </div>
           </div>

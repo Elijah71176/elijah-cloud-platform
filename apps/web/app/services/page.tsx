@@ -14,7 +14,7 @@ export default function ServicesPage() {
     },
     {
       title: "CI/CD & Deployment Automation",
-      desc: "Automate build, test and deployment workflows using GitHub Actions and modern hosting platforms such as AWS, Vercel, Render and other cloud deployment services.",
+      desc: "Build automated CI/CD workflows using GitHub Actions for testing, building and deploying applications to AWS and modern hosting platforms.",
     },
     {
       title: "Docker & DevOps",
@@ -23,6 +23,10 @@ export default function ServicesPage() {
     {
       title: "Portfolio & Business Websites",
       desc: "Create modern websites for individuals, small businesses and professional service providers.",
+    },
+    {
+      title: "Technical Support & Cloud Assistance",
+      desc: "Provide technical troubleshooting, application support, deployment assistance and practical support for cloud-based systems and development environments.",
     },
   ];
 
@@ -42,8 +46,7 @@ export default function ServicesPage() {
         </h1>
 
         <p style={{ fontSize: 18, color: "#475569", lineHeight: 1.7 }}>
-          I provide cloud-based development services, backend systems, full-stack applications and DevOps solutions.
-        </p>
+          I provide practical cloud development, backend, full-stack and DevOps services for individuals, small businesses and growing digital projects.        </p>
 
         <div
           style={{

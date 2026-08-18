@@ -6,7 +6,14 @@ const projects = [
       "A cloud-based client service platform with request form, backend API, CI/CD and AWS deployment.",
     stack: ["Next.js", "NestJS", "PostgreSQL", "Docker", "AWS EC2", "AWS S3"],
     link: "/request",
-  }, 
+    images: [
+      "/images/projects/admin-dashboard.png",
+      "/images/projects/projects.png",
+      "/images/projects/request-workflow.png",
+    ],
+
+
+  },
   {
     title: "Backend API",
     status: "Completed",
@@ -41,14 +48,18 @@ export default function ProjectsPage() {
           gap: 20,
           marginTop: 30,
         }}>
-          {projects.map((project) => (
+          {projects.map((project, index) => (
             <article key={project.title} style={{
               background: "white",
               border: "1px solid #e2e8f0",
               borderRadius: 18,
               padding: 22,
               boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
-            }}>
+
+              // Make Elijah Cloud Platform the featured project
+              gridColumn: index === 0 ? "1 / -1" : "auto",
+            }}
+            >
               <span style={{
                 display: "inline-block",
                 background: "#dcfce7",
@@ -64,6 +75,44 @@ export default function ProjectsPage() {
 
               <h2 style={{ margin: "0 0 10px", fontSize: 24 }}>{project.title}</h2>
               <p style={{ color: "#64748b", lineHeight: 1.6 }}>{project.description}</p>
+
+              {project.images && (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                    gap: 10,
+                    marginTop: 16,
+                  }}
+                >
+                  {project.images.map((image) => (
+                    <a
+                      key={image}
+                      href={image}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "block",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <img
+                        src={image}
+                        alt={`${project.title} screenshot`}
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          objectFit: "contain",
+                          borderRadius: 12,
+                          border: "1px solid #e2e8f0",
+                          background: "#f8fafc",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
                 {project.stack.map((tech) => (

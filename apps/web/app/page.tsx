@@ -23,6 +23,15 @@ export default function HomePage() {
               Elijah Cloud Platform
             </p>
 
+            <p
+              style={{
+                color: "#64748b",
+                fontWeight: 700,
+                margin: "6px 0 0",
+              }}
+            >
+              Docker, AWS, and CI/CD practices.            </p>
+
             <h1
               style={{
                 fontSize: 52,
@@ -31,9 +40,8 @@ export default function HomePage() {
                 color: "#0f172a",
               }}
             >
-              Cloud-based service request and project management platform.
+              Junior AWS Cloud Developer building practical full-stack cloud solutions.
             </h1>
-
             <p
               style={{
                 fontSize: 19,
@@ -42,10 +50,10 @@ export default function HomePage() {
                 maxWidth: 640,
               }}
             >
-              Elijah Cloud Platform is a portfolio and client portal built with Next.js,
-              NestJS, PostgreSQL, Docker, AWS EC2, AWS S3 and GitHub Actions.
-              It allows users to request services while an admin can manage
-              projects and track progress.
+              I build cloud-based applications using Next.js, NestJS, PostgreSQL,
+              Docker, AWS and CI/CD practices. Elijah Cloud Platform is my main
+              full-stack project, combining a public portfolio, service requests,
+              customer management and project tracking.
             </p>
 
             <div style={{ display: "flex", gap: 14, marginTop: 28, flexWrap: "wrap" }}>
@@ -77,6 +85,21 @@ export default function HomePage() {
               >
                 View Projects
               </Link>
+              <Link
+                href="/about"
+                style={{
+                  background: "white",
+                  color: "#2563eb",
+                  padding: "13px 18px",
+                  borderRadius: 12,
+                  textDecoration: "none",
+                  fontWeight: 900,
+                  border: "1px solid #2563eb",
+                }}
+              >
+                About Me
+              </Link>
+
             </div>
           </div>
 
