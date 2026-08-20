@@ -1,13 +1,32 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 
+import { AuthGuard } from '@nestjs/passport';
 
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, ParseUUIDPipe   } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+
 @Controller('projects')
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('ADMIN')
 export class ProjectsController {
-  constructor(private readonly projects: ProjectsService) {}
+  constructor(
+    private readonly projects: ProjectsService,
+  ) {}
 
   @Get()
   findAll() {
@@ -23,12 +42,16 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  findOne(@Param('id', new ParseUUIDPipe()) id: string) {
+  findOne(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
     return this.projects.findOne(id);
   }
 
   @Post()
-  create(@Body() dto: CreateProjectDto) {
+  create(
+    @Body() dto: CreateProjectDto,
+  ) {
     return this.projects.create(dto);
   }
 
@@ -42,7 +65,9 @@ export class ProjectsController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@Param('id', new ParseUUIDPipe()) id: string) {
+  async remove(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
     await this.projects.remove(id);
   }
 }
