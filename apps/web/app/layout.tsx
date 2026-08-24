@@ -64,14 +64,38 @@ export default function RootLayout({
               justifyContent: "center",
             }}
           >
-            <Link href="/" style={linkStyle}>Home</Link>
-            <Link href="/about" style={linkStyle}>About</Link>
-            <Link href="/projects" style={linkStyle}>Projects</Link>
-            <Link href="/services" style={linkStyle}>Services</Link>
-            <Link href="/request" style={linkStyle}>Request</Link>
-            <Link href="/contact" style={linkStyle}>Contact</Link>
-            <Link href="/admin/projects" style={{ ...linkStyle, color: "#2563eb" }}>
-              Admin
+            <Link href="/" style={linkStyle}>
+              Home
+            </Link>
+
+            <Link href="/about" style={linkStyle}>
+              About
+            </Link>
+
+            <Link href="/projects" style={linkStyle}>
+              Projects
+            </Link>
+
+            <Link href="/services" style={linkStyle}>
+              Services
+            </Link>
+
+            <Link href="/request" style={linkStyle}>
+              Request
+            </Link>
+
+            <Link href="/contact" style={linkStyle}>
+              Contact
+            </Link>
+
+            <Link
+              href="/login"
+              style={{
+                ...linkStyle,
+                color: "#2563eb",
+              }}
+            >
+              Login
             </Link>
           </div>
         </nav>
