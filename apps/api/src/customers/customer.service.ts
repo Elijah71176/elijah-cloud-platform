@@ -1,5 +1,3 @@
-
-
 import {
   ConflictException,
   Injectable,
@@ -7,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { Customer } from './customers.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -16,10 +15,12 @@ export class CustomerService {
   constructor(
     @InjectRepository(Customer)
     private readonly customerRepo: Repository<Customer>,
-  ) { }
+  ) {}
 
   findAll() {
-    return this.customerRepo.find({ relations: { projects: true } });
+    return this.customerRepo.find({
+      relations: { projects: true },
+    });
   }
 
   async findOne(id: string) {
@@ -27,10 +28,28 @@ export class CustomerService {
       where: { id },
       relations: { projects: true },
     });
-    if (!customer) throw new NotFoundException(`Customer ${id} not found`);
+
+    if (!customer) {
+      throw new NotFoundException(`Customer ${id} not found`);
+    }
+
     return customer;
   }
 
+  async findByEmail(email: string) {
+    const customer = await this.customerRepo.findOne({
+      where: { email },
+      relations: { projects: true },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(
+        `Customer account for ${email} not found`,
+      );
+    }
+
+    return customer;
+  }
 
   create(dto: CreateCustomerDto) {
     const customer = this.customerRepo.create(dto);
@@ -39,7 +58,9 @@ export class CustomerService {
 
   async update(id: string, dto: UpdateCustomerDto) {
     const customer = await this.findOne(id);
+
     Object.assign(customer, dto);
+
     return this.customerRepo.save(customer);
   }
 
@@ -55,6 +76,5 @@ export class CustomerService {
     await this.customerRepo.remove(customer);
 
     return { deleted: true };
-
   }
 }

@@ -66,7 +66,7 @@ function getDeadlineStatus(project: Project) {
 
   const differenceInDays = Math.ceil(
     (dueDate.getTime() - today.getTime()) /
-      (1000 * 60 * 60 * 24)
+    (1000 * 60 * 60 * 24),
   );
 
   if (differenceInDays < 0) {
@@ -97,9 +97,27 @@ export default function ProjectsPage() {
       setLoading(true);
 
       try {
+        const token = localStorage.getItem(
+          'elijah-cloud-platform-token',
+        );
+
+        if (!token) {
+          throw new Error(
+            'Admin session not found. Please log in again.',
+          );
+        }
+
+        const authHeaders = {
+          Authorization: `Bearer ${token}`,
+        };
+
         const [pRes, cRes] = await Promise.all([
-          fetch(`${API_URL}/projects`),
-          fetch(`${API_URL}/customers`),
+          fetch(`${API_URL}/projects`, {
+            headers: authHeaders,
+          }),
+          fetch(`${API_URL}/customers`, {
+            headers: authHeaders,
+          }),
         ]);
 
         if (!pRes.ok) {
@@ -124,34 +142,34 @@ export default function ProjectsPage() {
 
   const customerMap = useMemo(
     () => new Map(customers.map((c) => [c.id, c])),
-    [customers]
+    [customers],
   );
 
   const stats = {
     total: projects.length,
 
     planned: projects.filter(
-      (p) => p.status === 'planned'
+      (p) => p.status === 'planned',
     ).length,
 
     active: projects.filter(
-      (p) => p.status === 'active'
+      (p) => p.status === 'active',
     ).length,
 
     onHold: projects.filter(
-      (p) => p.status === 'on_hold'
+      (p) => p.status === 'on_hold',
     ).length,
 
     overdue: projects.filter(
-      (p) => getDeadlineStatus(p) === 'overdue'
+      (p) => getDeadlineStatus(p) === 'overdue',
     ).length,
 
     dueSoon: projects.filter(
-      (p) => getDeadlineStatus(p) === 'due_soon'
+      (p) => getDeadlineStatus(p) === 'due_soon',
     ).length,
 
     done: projects.filter(
-      (p) => p.status === 'done'
+      (p) => p.status === 'done',
     ).length,
   };
 
@@ -178,8 +196,20 @@ export default function ProjectsPage() {
 
     if (!ok) return;
 
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token',
+    );
+
+    if (!token) {
+      alert('Admin session not found. Please log in again.');
+      return;
+    }
+
     const res = await fetch(`${API_URL}/projects/${id}`, {
       method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (!res.ok && res.status !== 204) {
@@ -188,7 +218,7 @@ export default function ProjectsPage() {
     }
 
     setProjects((prev) =>
-      prev.filter((p) => p.id !== id)
+      prev.filter((p) => p.id !== id),
     );
   }
 
@@ -206,7 +236,6 @@ export default function ProjectsPage() {
           margin: '0 auto',
         }}
       >
-        {/* Header */}
         <div
           style={{
             display: 'flex',
@@ -262,7 +291,6 @@ export default function ProjectsPage() {
           </Link>
         </div>
 
-        {/* Statistics */}
         <div
           style={{
             display: 'grid',
@@ -314,7 +342,6 @@ export default function ProjectsPage() {
           ))}
         </div>
 
-        {/* Project Table */}
         <div
           style={{
             background: 'white',
@@ -338,7 +365,6 @@ export default function ProjectsPage() {
             </div>
           )}
 
-          {/* Search + Filter */}
           {!loading && !error && (
             <div
               style={{
@@ -370,8 +396,8 @@ export default function ProjectsPage() {
                 onChange={(e) =>
                   setStatusFilter(
                     e.target.value as
-                      | 'all'
-                      | Project['status']
+                    | 'all'
+                    | Project['status'],
                   )
                 }
                 style={{
@@ -385,19 +411,15 @@ export default function ProjectsPage() {
                 <option value="all">
                   All Statuses
                 </option>
-
                 <option value="planned">
                   Planned
                 </option>
-
                 <option value="active">
                   Active
                 </option>
-
                 <option value="on_hold">
                   On Hold
                 </option>
-
                 <option value="done">
                   Done
                 </option>
@@ -450,7 +472,7 @@ export default function ProjectsPage() {
                 <tbody>
                   {filteredProjects.map((project) => {
                     const customer = customerMap.get(
-                      project.customerId
+                      project.customerId,
                     );
 
                     const customerLabel = customer
@@ -462,7 +484,6 @@ export default function ProjectsPage() {
 
                     return (
                       <tr key={project.id}>
-                        {/* Title */}
                         <td
                           style={{
                             padding: 12,
@@ -488,7 +509,6 @@ export default function ProjectsPage() {
                           </div>
                         </td>
 
-                        {/* Description */}
                         <td
                           style={{
                             padding: 12,
@@ -497,19 +517,10 @@ export default function ProjectsPage() {
                             maxWidth: 260,
                           }}
                         >
-                          <div
-                            style={{
-                              color: '#475569',
-                              lineHeight: 1.5,
-                              whiteSpace: 'normal',
-                            }}
-                          >
-                            {project.description ||
-                              'No description'}
-                          </div>
+                          {project.description ||
+                            'No description'}
                         </td>
 
-                        {/* Status */}
                         <td
                           style={{
                             padding: 12,
@@ -520,44 +531,39 @@ export default function ProjectsPage() {
                           <span
                             style={{
                               ...statusStyle(
-                                project.status
+                                project.status,
                               ),
                               display: 'inline-flex',
                               padding: '5px 11px',
                               borderRadius: 999,
                               fontSize: 12,
                               fontWeight: 900,
-                              textTransform:
-                                'uppercase',
+                              textTransform: 'uppercase',
                             }}
                           >
                             {project.status.replaceAll(
                               '_',
-                              ' '
+                              ' ',
                             )}
                           </span>
                         </td>
 
-                        {/* Start Date */}
                         <td
                           style={{
                             padding: 12,
                             borderBottom:
                               '1px solid #f1f5f9',
-                            whiteSpace: 'nowrap',
                           }}
                         >
                           {project.startDate ||
                             'Not set'}
                         </td>
 
-                        {/* Due Date */}
                         <td
                           style={{
                             padding: 12,
                             borderBottom:
                               '1px solid #f1f5f9',
-                            whiteSpace: 'nowrap',
                           }}
                         >
                           <div>
@@ -568,47 +574,30 @@ export default function ProjectsPage() {
 
                             {deadlineStatus ===
                               'overdue' && (
-                              <span
-                                style={{
-                                  display:
-                                    'inline-block',
-                                  marginTop: 5,
-                                  padding: '4px 8px',
-                                  borderRadius: 999,
-                                  background:
-                                    '#fee2e2',
-                                  color: '#b91c1c',
-                                  fontSize: 11,
-                                  fontWeight: 900,
-                                }}
-                              >
-                                OVERDUE
-                              </span>
-                            )}
+                                <div
+                                  style={{
+                                    color: '#b91c1c',
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  OVERDUE
+                                </div>
+                              )}
 
                             {deadlineStatus ===
                               'due_soon' && (
-                              <span
-                                style={{
-                                  display:
-                                    'inline-block',
-                                  marginTop: 5,
-                                  padding: '4px 8px',
-                                  borderRadius: 999,
-                                  background:
-                                    '#fef3c7',
-                                  color: '#92400e',
-                                  fontSize: 11,
-                                  fontWeight: 900,
-                                }}
-                              >
-                                DUE SOON
-                              </span>
-                            )}
+                                <div
+                                  style={{
+                                    color: '#92400e',
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  DUE SOON
+                                </div>
+                              )}
                           </div>
                         </td>
 
-                        {/* Customer */}
                         <td
                           style={{
                             padding: 12,
@@ -621,14 +610,12 @@ export default function ProjectsPage() {
                           </strong>
                         </td>
 
-                        {/* Actions */}
                         <td
                           style={{
                             padding: 12,
                             borderBottom:
                               '1px solid #f1f5f9',
                             textAlign: 'right',
-                            whiteSpace: 'nowrap',
                           }}
                         >
                           <Link
@@ -645,9 +632,7 @@ export default function ProjectsPage() {
 
                           <button
                             onClick={() =>
-                              deleteProject(
-                                project.id
-                              )
+                              deleteProject(project.id)
                             }
                             style={{
                               border:

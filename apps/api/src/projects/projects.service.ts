@@ -1,7 +1,7 @@
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { Project } from './project.entity';
 import { Customer } from '../customers/customers.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -12,26 +12,37 @@ export class ProjectsService {
   constructor(
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
+
     @InjectRepository(Customer)
     private readonly customerRepo: Repository<Customer>,
-  ) { }
+  ) {}
 
-  async findOne(id: string) { // Find a project by ID
-    const project = await this.projectRepo.findOne({ where: { id } });
+  async findOne(id: string) {
+    const project = await this.projectRepo.findOne({
+      where: { id },
+    });
+
     if (!project) {
       throw new NotFoundException(`Project ${id} not found`);
     }
+
     return project;
   }
-
 
   findAll() {
     return this.projectRepo.find();
   }
 
   async create(dto: CreateProjectDto) {
-    const customer = await this.customerRepo.findOne({ where: { id: dto.customerId } });
-    if (!customer) throw new NotFoundException(`Customer ${dto.customerId} not found`);
+    const customer = await this.customerRepo.findOne({
+      where: { id: dto.customerId },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(
+        `Customer ${dto.customerId} not found`,
+      );
+    }
 
     const project = this.projectRepo.create({
       title: dto.title,
@@ -44,23 +55,56 @@ export class ProjectsService {
 
     return this.projectRepo.save(project);
   }
+
   findByCustomer(customerId: string) {
-    return this.projectRepo.find({ where: { customerId } });
+    return this.projectRepo.find({
+      where: { customerId },
+    });
+  }
+
+  async findMyProjects(email: string) {
+    const customer = await this.customerRepo.findOne({
+      where: { email },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(
+        `Customer account for ${email} not found`,
+      );
+    }
+
+    return this.projectRepo.find({
+      where: {
+        customerId: customer.id,
+      },
+    });
   }
 
   async update(id: string, dto: UpdateProjectDto) {
-    const project = await this.projectRepo.findOne({ where: { id } });
-    if (!project) throw new NotFoundException(`Project ${id} not found`);
+    const project = await this.projectRepo.findOne({
+      where: { id },
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project ${id} not found`);
+    }
 
     Object.assign(project, dto);
+
     return this.projectRepo.save(project);
   }
 
   async remove(id: string) {
-    const project = await this.projectRepo.findOne({ where: { id } });
-    if (!project) throw new NotFoundException(`Project ${id} not found`);
+    const project = await this.projectRepo.findOne({
+      where: { id },
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project ${id} not found`);
+    }
 
     await this.projectRepo.remove(project);
+
     return { deleted: true };
   }
 }

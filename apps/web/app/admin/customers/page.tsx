@@ -22,7 +22,19 @@ export default function AdminCustomersPage() {
   useEffect(() => {
     async function loadCustomers() {
       try {
-        const response = await fetch(`${API_URL}/customers`);
+        const token = localStorage.getItem(
+          "elijah-cloud-platform-token"
+        );
+
+        if (!token) {
+          throw new Error("Admin session not found");
+        }
+
+        const response = await fetch(`${API_URL}/customers`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to load customers");
@@ -38,7 +50,6 @@ export default function AdminCustomersPage() {
     }
 
     loadCustomers();
-
   }, [API_URL]);
 
   async function deleteCustomer(id: string) {
@@ -48,8 +59,20 @@ export default function AdminCustomersPage() {
 
     if (!confirmed) return;
 
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-token"
+    );
+
+    if (!token) {
+      alert("Admin session not found. Please log in again.");
+      return;
+    }
+
     const response = await fetch(`${API_URL}/customers/${id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (!response.ok) {
@@ -62,7 +85,7 @@ export default function AdminCustomersPage() {
           message = data.message;
         }
       } catch {
-        // keep default message
+        // Keep default message
       }
 
       alert(message);
@@ -70,9 +93,12 @@ export default function AdminCustomersPage() {
     }
 
     setCustomers((currentCustomers) =>
-      currentCustomers.filter((customer) => customer.id !== id)
+      currentCustomers.filter(
+        (customer) => customer.id !== id
+      )
     );
   }
+
   return (
     <main
       style={{
@@ -82,6 +108,7 @@ export default function AdminCustomersPage() {
       }}
     >
       <h1>Customer Management</h1>
+
       <p>Manage all customers from this page.</p>
 
       <Link
@@ -100,16 +127,28 @@ export default function AdminCustomersPage() {
         + Add Customer
       </Link>
 
-      {loading && <p style={{ marginTop: 24 }}>Loading customers...</p>}
+      {loading && (
+        <p style={{ marginTop: 24 }}>
+          Loading customers...
+        </p>
+      )}
 
       {error && (
-        <p style={{ marginTop: 24, color: "crimson", fontWeight: "bold" }}>
+        <p
+          style={{
+            marginTop: 24,
+            color: "crimson",
+            fontWeight: "bold",
+          }}
+        >
           {error}
         </p>
       )}
 
       {!loading && !error && customers.length === 0 && (
-        <p style={{ marginTop: 24 }}>No customers found.</p>
+        <p style={{ marginTop: 24 }}>
+          No customers found.
+        </p>
       )}
 
       <div
@@ -129,10 +168,19 @@ export default function AdminCustomersPage() {
               padding: 18,
             }}
           >
-            <h2 style={{ marginTop: 0 }}>{customer.name}</h2>
+            <h2 style={{ marginTop: 0 }}>
+              {customer.name}
+            </h2>
+
             <p>Email: {customer.email}</p>
-            <p>Phone: {customer.phone || "Not provided"}</p>
-            <p>{customer.description || "No description"}</p>
+
+            <p>
+              Phone: {customer.phone || "Not provided"}
+            </p>
+
+            <p>
+              {customer.description || "No description"}
+            </p>
 
             <Link
               href={`/admin/customers/edit?id=${customer.id}`}
@@ -146,8 +194,8 @@ export default function AdminCustomersPage() {
             >
               Edit
             </Link>
-            <button
 
+            <button
               onClick={() => deleteCustomer(customer.id)}
               style={{
                 marginLeft: 14,
@@ -163,8 +211,6 @@ export default function AdminCustomersPage() {
               Delete
             </button>
           </article>
-
-
         ))}
       </div>
     </main>

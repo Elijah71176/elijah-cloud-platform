@@ -1,6 +1,3 @@
-//create a new customer page with a form to add a new customer. The form should have fields for name, email, phone number, and a short description. The form should have a submit button that says "Save Customer". The page should have a title that says "Add Customer" and a subtitle that says "Create a new customer for Elijah Cloud Platform." The page should have some padding and a light background color.
-
-
 "use client";
 
 import { useState } from "react";
@@ -49,25 +46,45 @@ export default function NewCustomerPage() {
     const API_URL =
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-token"
+    );
+
+    if (!token) {
+      alert("Admin session not found. Please log in again.");
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/customers`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(form),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create customer");
+        const data = await response.json().catch(() => null);
+
+        throw new Error(
+          data?.message || "Failed to create customer"
+        );
       }
 
       alert("Customer created successfully!");
 
       router.push("/admin/customers");
+      router.refresh();
     } catch (error) {
       console.error(error);
-      alert("Something went wrong.");
+
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("Something went wrong.");
+      }
     }
   }
 
@@ -81,7 +98,9 @@ export default function NewCustomerPage() {
     >
       <h1>Add Customer</h1>
 
-      <p>Create a new customer for Elijah Cloud Platform.</p>
+      <p>
+        Create a new customer for Elijah Cloud Platform.
+      </p>
 
       <hr style={{ margin: "24px 0" }} />
 
@@ -93,6 +112,7 @@ export default function NewCustomerPage() {
           value={form.name}
           onChange={handleChange}
           style={inputStyle}
+          required
         />
 
         <input
@@ -102,6 +122,7 @@ export default function NewCustomerPage() {
           value={form.email}
           onChange={handleChange}
           style={inputStyle}
+          required
         />
 
         <input
