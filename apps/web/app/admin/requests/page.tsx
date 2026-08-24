@@ -27,10 +27,24 @@ export default function AdminRequestsPage() {
   const API_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+  function getToken() {
+    return localStorage.getItem("elijah-cloud-platform-token");
+  }
+
   useEffect(() => {
     async function loadRequests() {
       try {
-        const response = await fetch(`${API_URL}/request`);
+        const token = getToken();
+
+        if (!token) {
+          throw new Error("Admin token not found.");
+        }
+
+        const response = await fetch(`${API_URL}/request`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to load service requests");
@@ -52,10 +66,18 @@ export default function AdminRequestsPage() {
     id: string,
     status: RequestStatus
   ): Promise<boolean> {
+    const token = getToken();
+
+    if (!token) {
+      alert("Admin token not found. Please log in again.");
+      return false;
+    }
+
     const response = await fetch(`${API_URL}/request/${id}/status`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ status }),
     });
@@ -81,10 +103,18 @@ export default function AdminRequestsPage() {
       return;
     }
 
+    const token = getToken();
+
+    if (!token) {
+      alert("Admin token not found. Please log in again.");
+      return;
+    }
+
     const customerResponse = await fetch(`${API_URL}/customers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         name: request.name,
@@ -103,6 +133,9 @@ export default function AdminRequestsPage() {
       `${API_URL}/request/${request.id}/convert`,
       {
         method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
 
@@ -226,15 +259,9 @@ export default function AdminRequestsPage() {
                 : "Not converted"}
             </p>
 
-            <p
-              style={{
-                color: "#64748b",
-              }}
-            >
+            <p style={{ color: "#64748b" }}>
               Submitted:{" "}
-              {new Date(
-                request.createdAt
-              ).toLocaleString()}
+              {new Date(request.createdAt).toLocaleString()}
             </p>
 
             <div
@@ -245,7 +272,6 @@ export default function AdminRequestsPage() {
                 marginTop: 12,
               }}
             >
-              {/* Convert button */}
               {!request.converted &&
                 request.status === "pending" && (
                   <button
@@ -266,7 +292,6 @@ export default function AdminRequestsPage() {
                   </button>
                 )}
 
-              {/* Already converted */}
               {request.converted && (
                 <button
                   disabled
@@ -284,13 +309,10 @@ export default function AdminRequestsPage() {
                 </button>
               )}
 
-              {/* Pending */}
               {request.status === "pending" && (
                 <button
                   onClick={() =>
-                    temporarilyCloseRequest(
-                      request.id
-                    )
+                    temporarilyCloseRequest(request.id)
                   }
                   style={{
                     padding: "10px 14px",
@@ -306,9 +328,7 @@ export default function AdminRequestsPage() {
                 </button>
               )}
 
-              {/* Temporarily closed */}
-              {request.status ===
-                "temporarily_closed" && (
+              {request.status === "temporarily_closed" && (
                 <>
                   <button
                     onClick={() =>
@@ -329,9 +349,7 @@ export default function AdminRequestsPage() {
 
                   <button
                     onClick={() =>
-                      permanentlyCloseRequest(
-                        request.id
-                      )
+                      permanentlyCloseRequest(request.id)
                     }
                     style={{
                       padding: "10px 14px",
@@ -348,7 +366,6 @@ export default function AdminRequestsPage() {
                 </>
               )}
 
-              {/* Permanently closed */}
               {request.status === "closed" && (
                 <button
                   disabled

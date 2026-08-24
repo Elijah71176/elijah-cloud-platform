@@ -54,10 +54,34 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function loadStats() {
       try {
-        const response = await fetch(`${API_URL}/dashboard/stats`);
+        const token = localStorage.getItem(
+          "elijah-cloud-platform-token"
+        );
+
+        if (!token) {
+          setError("You are not logged in.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(
+          `${API_URL}/dashboard/stats`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.status === 401 || response.status === 403) {
+          setError("Your session is invalid or expired.");
+          return;
+        }
 
         if (!response.ok) {
-          throw new Error("Failed to load dashboard statistics");
+          throw new Error(
+            "Failed to load dashboard statistics"
+          );
         }
 
         const data = (await response.json()) as DashboardStats;
