@@ -19,6 +19,16 @@ type Customer = {
   email: string;
 };
 
+type ProjectAttachment = {
+  id: string;
+  projectId: string;
+  originalName: string;
+  storageKey: string;
+  mimeType: string;
+  size: number;
+  uploadedAt: string;
+};
+
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -62,7 +72,9 @@ function getDeadlineStatus(project: Project) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const dueDate = new Date(`${project.dueDate}T00:00:00`);
+  const dueDate = new Date(
+    `${project.dueDate}T00:00:00`,
+  );
 
   const differenceInDays = Math.ceil(
     (dueDate.getTime() - today.getTime()) /
@@ -80,11 +92,32 @@ function getDeadlineStatus(project: Project) {
   return null;
 }
 
+function formatFileSize(size: number) {
+  if (size < 1024) {
+    return `${size} B`;
+  }
+
+  if (size < 1024 * 1024) {
+    return `${(size / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+
+  const [attachments, setAttachments] = useState<
+    Record<string, ProjectAttachment[]>
+  >({});
+
+  const [expandedProjectId, setExpandedProjectId] =
+    useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] =
+    useState<string | null>(null);
 
   const [search, setSearch] = useState('');
 
@@ -111,27 +144,72 @@ export default function ProjectsPage() {
           Authorization: `Bearer ${token}`,
         };
 
-        const [pRes, cRes] = await Promise.all([
-          fetch(`${API_URL}/projects`, {
-            headers: authHeaders,
-          }),
-          fetch(`${API_URL}/customers`, {
-            headers: authHeaders,
-          }),
-        ]);
+        const [projectsResponse, customersResponse] =
+          await Promise.all([
+            fetch(`${API_URL}/projects`, {
+              headers: authHeaders,
+            }),
 
-        if (!pRes.ok) {
-          throw new Error(await pRes.text());
+            fetch(`${API_URL}/customers`, {
+              headers: authHeaders,
+            }),
+          ]);
+
+        if (!projectsResponse.ok) {
+          throw new Error(
+            await projectsResponse.text(),
+          );
         }
 
-        if (!cRes.ok) {
-          throw new Error(await cRes.text());
+        if (!customersResponse.ok) {
+          throw new Error(
+            await customersResponse.text(),
+          );
         }
 
-        setProjects((await pRes.json()) as Project[]);
-        setCustomers((await cRes.json()) as Customer[]);
+        const projectsData =
+          (await projectsResponse.json()) as Project[];
+
+        const customersData =
+          (await customersResponse.json()) as Customer[];
+
+        setProjects(projectsData);
+        setCustomers(customersData);
+
+        const attachmentEntries =
+          await Promise.all(
+            projectsData.map(async (project) => {
+              const response = await fetch(
+                `${API_URL}/projects/${project.id}/attachments`,
+                {
+                  headers: authHeaders,
+                },
+              );
+
+              if (!response.ok) {
+                return [
+                  project.id,
+                  [],
+                ] as const;
+              }
+
+              const data =
+                (await response.json()) as ProjectAttachment[];
+
+              return [
+                project.id,
+                data,
+              ] as const;
+            }),
+          );
+
+        setAttachments(
+          Object.fromEntries(attachmentEntries),
+        );
       } catch (e: any) {
-        setError(e?.message || 'Failed to load data');
+        setError(
+          e?.message || 'Failed to load data',
+        );
       } finally {
         setLoading(false);
       }
@@ -141,7 +219,13 @@ export default function ProjectsPage() {
   }, []);
 
   const customerMap = useMemo(
-    () => new Map(customers.map((c) => [c.id, c])),
+    () =>
+      new Map(
+        customers.map((customer) => [
+          customer.id,
+          customer,
+        ]),
+      ),
     [customers],
   );
 
@@ -149,50 +233,73 @@ export default function ProjectsPage() {
     total: projects.length,
 
     planned: projects.filter(
-      (p) => p.status === 'planned',
+      (project) =>
+        project.status === 'planned',
     ).length,
 
     active: projects.filter(
-      (p) => p.status === 'active',
+      (project) =>
+        project.status === 'active',
     ).length,
 
     onHold: projects.filter(
-      (p) => p.status === 'on_hold',
+      (project) =>
+        project.status === 'on_hold',
     ).length,
 
     overdue: projects.filter(
-      (p) => getDeadlineStatus(p) === 'overdue',
+      (project) =>
+        getDeadlineStatus(project) === 'overdue',
     ).length,
 
     dueSoon: projects.filter(
-      (p) => getDeadlineStatus(p) === 'due_soon',
+      (project) =>
+        getDeadlineStatus(project) === 'due_soon',
     ).length,
 
     done: projects.filter(
-      (p) => p.status === 'done',
+      (project) =>
+        project.status === 'done',
     ).length,
   };
 
-  const filteredProjects = projects.filter((project) => {
-    const customer = customerMap.get(project.customerId);
+  const filteredProjects = projects.filter(
+    (project) => {
+      const customer = customerMap.get(
+        project.customerId,
+      );
 
-    const searchText = search.toLowerCase();
+      const searchText =
+        search.toLowerCase();
 
-    const matchesSearch =
-      project.title.toLowerCase().includes(searchText) ||
-      project.description?.toLowerCase().includes(searchText) ||
-      customer?.name.toLowerCase().includes(searchText) ||
-      customer?.email.toLowerCase().includes(searchText);
+      const matchesSearch =
+        project.title
+          .toLowerCase()
+          .includes(searchText) ||
+        project.description
+          ?.toLowerCase()
+          .includes(searchText) ||
+        customer?.name
+          .toLowerCase()
+          .includes(searchText) ||
+        customer?.email
+          .toLowerCase()
+          .includes(searchText);
 
-    const matchesStatus =
-      statusFilter === 'all' ||
-      project.status === statusFilter;
+      const matchesStatus =
+        statusFilter === 'all' ||
+        project.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
-  });
+      return (
+        matchesSearch && matchesStatus
+      );
+    },
+  );
 
   async function deleteProject(id: string) {
-    const ok = confirm('Delete this project?');
+    const ok = confirm(
+      'Delete this project?',
+    );
 
     if (!ok) return;
 
@@ -201,24 +308,50 @@ export default function ProjectsPage() {
     );
 
     if (!token) {
-      alert('Admin session not found. Please log in again.');
+      alert(
+        'Admin session not found. Please log in again.',
+      );
       return;
     }
 
-    const res = await fetch(`${API_URL}/projects/${id}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await fetch(
+      `${API_URL}/projects/${id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
 
-    if (!res.ok && res.status !== 204) {
+    if (
+      !response.ok &&
+      response.status !== 204
+    ) {
       alert('Delete failed');
       return;
     }
 
-    setProjects((prev) =>
-      prev.filter((p) => p.id !== id),
+    setProjects((current) =>
+      current.filter(
+        (project) => project.id !== id,
+      ),
+    );
+
+    setAttachments((current) => {
+      const updated = { ...current };
+      delete updated[id];
+      return updated;
+    });
+  }
+
+  function toggleAttachments(
+    projectId: string,
+  ) {
+    setExpandedProjectId(
+      expandedProjectId === projectId
+        ? null
+        : projectId,
     );
   }
 
@@ -239,7 +372,8 @@ export default function ProjectsPage() {
         <div
           style={{
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent:
+              'space-between',
             alignItems: 'center',
             gap: 16,
             marginBottom: 28,
@@ -272,7 +406,8 @@ export default function ProjectsPage() {
                 color: '#64748b',
               }}
             >
-              View, manage and track customer projects.
+              View, manage and track customer
+              projects.
             </p>
           </div>
 
@@ -301,19 +436,41 @@ export default function ProjectsPage() {
           }}
         >
           {[
-            ['Total Projects', stats.total],
-            ['Planned', stats.planned],
-            ['Active', stats.active],
-            ['On Hold', stats.onHold],
-            ['Overdue', stats.overdue],
-            ['Due Soon', stats.dueSoon],
-            ['Done', stats.done],
+            [
+              'Total Projects',
+              stats.total,
+            ],
+            [
+              'Planned',
+              stats.planned,
+            ],
+            [
+              'Active',
+              stats.active,
+            ],
+            [
+              'On Hold',
+              stats.onHold,
+            ],
+            [
+              'Overdue',
+              stats.overdue,
+            ],
+            [
+              'Due Soon',
+              stats.dueSoon,
+            ],
+            [
+              'Done',
+              stats.done,
+            ],
           ].map(([label, value]) => (
             <div
               key={label}
               style={{
                 background: 'white',
-                border: '1px solid #e2e8f0',
+                border:
+                  '1px solid #e2e8f0',
                 borderRadius: 16,
                 padding: 18,
                 boxShadow:
@@ -345,14 +502,19 @@ export default function ProjectsPage() {
         <div
           style={{
             background: 'white',
-            border: '1px solid #e2e8f0',
+            border:
+              '1px solid #e2e8f0',
             borderRadius: 18,
             padding: 22,
             boxShadow:
               '0 10px 30px rgba(15,23,42,0.08)',
           }}
         >
-          {loading && <div>Loading projects…</div>}
+          {loading && (
+            <div>
+              Loading projects…
+            </div>
+          )}
 
           {!loading && error && (
             <div
@@ -378,14 +540,18 @@ export default function ProjectsPage() {
                 type="text"
                 placeholder="Search project or customer..."
                 value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value,
+                  )
                 }
                 style={{
                   flex: 1,
                   minWidth: 240,
-                  padding: '11px 14px',
-                  border: '1px solid #cbd5e1',
+                  padding:
+                    '11px 14px',
+                  border:
+                    '1px solid #cbd5e1',
                   borderRadius: 10,
                   fontSize: 14,
                 }}
@@ -393,16 +559,18 @@ export default function ProjectsPage() {
 
               <select
                 value={statusFilter}
-                onChange={(e) =>
+                onChange={(event) =>
                   setStatusFilter(
-                    e.target.value as
+                    event.target.value as
                     | 'all'
                     | Project['status'],
                   )
                 }
                 style={{
-                  padding: '11px 14px',
-                  border: '1px solid #cbd5e1',
+                  padding:
+                    '11px 14px',
+                  border:
+                    '1px solid #cbd5e1',
                   borderRadius: 10,
                   background: 'white',
                   fontWeight: 700,
@@ -411,15 +579,19 @@ export default function ProjectsPage() {
                 <option value="all">
                   All Statuses
                 </option>
+
                 <option value="planned">
                   Planned
                 </option>
+
                 <option value="active">
                   Active
                 </option>
+
                 <option value="on_hold">
                   On Hold
                 </option>
+
                 <option value="done">
                   Done
                 </option>
@@ -428,12 +600,17 @@ export default function ProjectsPage() {
           )}
 
           {!loading && !error && (
-            <div style={{ overflowX: 'auto' }}>
+            <div
+              style={{
+                overflowX: 'auto',
+              }}
+            >
               <table
                 style={{
                   width: '100%',
-                  minWidth: 1000,
-                  borderCollapse: 'collapse',
+                  minWidth: 1150,
+                  borderCollapse:
+                    'collapse',
                 }}
               >
                 <thead>
@@ -445,13 +622,15 @@ export default function ProjectsPage() {
                       'Start Date',
                       'Due Date',
                       'Customer',
+                      'Attachments',
                       'Actions',
                     ].map((heading) => (
                       <th
                         key={heading}
                         style={{
                           textAlign:
-                            heading === 'Actions'
+                            heading ===
+                              'Actions'
                               ? 'right'
                               : 'left',
                           padding: 12,
@@ -459,7 +638,8 @@ export default function ProjectsPage() {
                             '1px solid #e2e8f0',
                           fontSize: 13,
                           color: '#475569',
-                          textTransform: 'uppercase',
+                          textTransform:
+                            'uppercase',
                           letterSpacing: 0.6,
                         }}
                       >
@@ -470,212 +650,424 @@ export default function ProjectsPage() {
                 </thead>
 
                 <tbody>
-                  {filteredProjects.map((project) => {
-                    const customer = customerMap.get(
-                      project.customerId,
-                    );
+                  {filteredProjects.map(
+                    (project) => {
+                      const customer =
+                        customerMap.get(
+                          project.customerId,
+                        );
 
-                    const customerLabel = customer
-                      ? `${customer.name} (${customer.email})`
-                      : project.customerId;
+                      const customerLabel =
+                        customer
+                          ? `${customer.name} (${customer.email})`
+                          : project.customerId;
 
-                    const deadlineStatus =
-                      getDeadlineStatus(project);
+                      const deadlineStatus =
+                        getDeadlineStatus(
+                          project,
+                        );
 
-                    return (
-                      <tr key={project.id}>
-                        <td
-                          style={{
-                            padding: 12,
-                            borderBottom:
-                              '1px solid #f1f5f9',
-                          }}
-                        >
-                          <div
+                      const projectAttachments =
+                        attachments[
+                        project.id
+                        ] || [];
+
+                      const isExpanded =
+                        expandedProjectId ===
+                        project.id;
+
+                      return (
+                        <tr key={project.id}>
+                          <td
                             style={{
-                              fontWeight: 900,
+                              padding: 12,
+                              borderBottom:
+                                '1px solid #f1f5f9',
                             }}
                           >
-                            {project.title}
-                          </div>
-
-                          <div
-                            style={{
-                              color: '#64748b',
-                              fontSize: 13,
-                            }}
-                          >
-                            {project.id}
-                          </div>
-                        </td>
-
-                        <td
-                          style={{
-                            padding: 12,
-                            borderBottom:
-                              '1px solid #f1f5f9',
-                            maxWidth: 260,
-                          }}
-                        >
-                          {project.description ||
-                            'No description'}
-                        </td>
-
-                        <td
-                          style={{
-                            padding: 12,
-                            borderBottom:
-                              '1px solid #f1f5f9',
-                          }}
-                        >
-                          <span
-                            style={{
-                              ...statusStyle(
-                                project.status,
-                              ),
-                              display: 'inline-flex',
-                              padding: '5px 11px',
-                              borderRadius: 999,
-                              fontSize: 12,
-                              fontWeight: 900,
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {project.status.replaceAll(
-                              '_',
-                              ' ',
-                            )}
-                          </span>
-                        </td>
-
-                        <td
-                          style={{
-                            padding: 12,
-                            borderBottom:
-                              '1px solid #f1f5f9',
-                          }}
-                        >
-                          {project.startDate ||
-                            'Not set'}
-                        </td>
-
-                        <td
-                          style={{
-                            padding: 12,
-                            borderBottom:
-                              '1px solid #f1f5f9',
-                          }}
-                        >
-                          <div>
-                            <div>
-                              {project.dueDate ||
-                                'Not set'}
+                            <div
+                              style={{
+                                fontWeight: 900,
+                              }}
+                            >
+                              {project.title}
                             </div>
 
-                            {deadlineStatus ===
-                              'overdue' && (
-                                <div
-                                  style={{
-                                    color: '#b91c1c',
-                                    fontWeight: 900,
-                                  }}
-                                >
-                                  OVERDUE
-                                </div>
-                              )}
+                            <div
+                              style={{
+                                color:
+                                  '#64748b',
+                                fontSize: 13,
+                              }}
+                            >
+                              {project.id}
+                            </div>
+                          </td>
 
-                            {deadlineStatus ===
-                              'due_soon' && (
-                                <div
-                                  style={{
-                                    color: '#92400e',
-                                    fontWeight: 900,
-                                  }}
-                                >
-                                  DUE SOON
-                                </div>
-                              )}
-                          </div>
-                        </td>
+                          <td
+                            style={{
+                              padding: 12,
+                              borderBottom:
+                                '1px solid #f1f5f9',
+                              maxWidth: 260,
+                            }}
+                          >
+                            {project.description ||
+                              'No description'}
+                          </td>
 
+                          <td
+                            style={{
+                              padding: 12,
+                              borderBottom:
+                                '1px solid #f1f5f9',
+                            }}
+                          >
+                            <span
+                              style={{
+                                ...statusStyle(
+                                  project.status,
+                                ),
+                                display:
+                                  'inline-flex',
+                                padding:
+                                  '5px 11px',
+                                borderRadius:
+                                  999,
+                                fontSize: 12,
+                                fontWeight: 900,
+                                textTransform:
+                                  'uppercase',
+                              }}
+                            >
+                              {project.status.replaceAll(
+                                '_',
+                                ' ',
+                              )}
+                            </span>
+                          </td>
+
+                          <td
+                            style={{
+                              padding: 12,
+                              borderBottom:
+                                '1px solid #f1f5f9',
+                            }}
+                          >
+                            {project.startDate ||
+                              'Not set'}
+                          </td>
+
+                          <td
+                            style={{
+                              padding: 12,
+                              borderBottom:
+                                '1px solid #f1f5f9',
+                            }}
+                          >
+                            <div>
+                              <div>
+                                {project.dueDate ||
+                                  'Not set'}
+                              </div>
+
+                              {deadlineStatus ===
+                                'overdue' && (
+                                  <div
+                                    style={{
+                                      color:
+                                        '#b91c1c',
+                                      fontWeight:
+                                        900,
+                                    }}
+                                  >
+                                    OVERDUE
+                                  </div>
+                                )}
+
+                              {deadlineStatus ===
+                                'due_soon' && (
+                                  <div
+                                    style={{
+                                      color:
+                                        '#92400e',
+                                      fontWeight:
+                                        900,
+                                    }}
+                                  >
+                                    DUE SOON
+                                  </div>
+                                )}
+                            </div>
+                          </td>
+
+                          <td
+                            style={{
+                              padding: 12,
+                              borderBottom:
+                                '1px solid #f1f5f9',
+                            }}
+                          >
+                            <strong>
+                              {customerLabel}
+                            </strong>
+                          </td>
+
+                          <td
+                            style={{
+                              padding: 12,
+                              borderBottom:
+                                '1px solid #f1f5f9',
+                              minWidth: 180,
+                              verticalAlign:
+                                'top',
+                            }}
+                          >
+                            <button
+                              onClick={() =>
+                                toggleAttachments(
+                                  project.id,
+                                )
+                              }
+                              style={{
+                                width: '100%',
+                                border:
+                                  '1px solid #bfdbfe',
+                                background:
+                                  projectAttachments.length >
+                                    0
+                                    ? '#eff6ff'
+                                    : '#f8fafc',
+                                color:
+                                  projectAttachments.length >
+                                    0
+                                    ? '#1d4ed8'
+                                    : '#64748b',
+                                borderRadius:
+                                  10,
+                                padding:
+                                  '9px 12px',
+                                cursor:
+                                  'pointer',
+                                fontWeight:
+                                  800,
+                                textAlign:
+                                  'left',
+                              }}
+                            >
+                              📎 Attachments (
+                              {
+                                projectAttachments.length
+                              }
+                              )
+                            </button>
+
+                            {isExpanded && (
+                              <div
+                                style={{
+                                  marginTop:
+                                    10,
+                                  padding: 10,
+                                  background:
+                                    '#f8fafc',
+                                  borderRadius:
+                                    10,
+                                  border:
+                                    '1px solid #e2e8f0',
+                                }}
+                              >
+                                {projectAttachments.length ===
+                                  0 ? (
+                                  <div
+                                    style={{
+                                      color:
+                                        '#64748b',
+                                      fontSize:
+                                        13,
+                                    }}
+                                  >
+                                    No files uploaded.
+                                  </div>
+                                ) : (
+                                  projectAttachments.map(
+                                    (
+                                      attachment,
+                                    ) => (
+                                      <div
+                                        key={
+                                          attachment.id
+                                        }
+                                        style={{
+                                          padding:
+                                            '8px 0',
+                                          borderBottom:
+                                            '1px solid #e2e8f0',
+                                        }}
+                                      >
+                                        <button
+                                          onClick={async () => {
+                                            const token = localStorage.getItem(
+                                              'elijah-cloud-platform-token',
+                                            );
+
+                                            if (!token) {
+                                              alert(
+                                                'Admin session not found. Please log in again.',
+                                              );
+                                              return;
+                                            }
+
+                                            const response = await fetch(
+                                              `${API_URL}/projects/${project.id}/attachments/${attachment.id}/download`,
+                                              {
+                                                headers: {
+                                                  Authorization: `Bearer ${token}`,
+                                                },
+                                              },
+                                            );
+
+                                            if (!response.ok) {
+                                              alert('Could not download attachment.');
+                                              return;
+                                            }
+
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+
+                                            const link = document.createElement('a');
+
+                                            link.href = url;
+                                            link.download = attachment.originalName;
+
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            link.remove();
+
+                                            window.URL.revokeObjectURL(url);
+                                          }}
+                                          style={{
+                                            border: 'none',
+                                            background: 'transparent',
+                                            padding: 0,
+                                            color: '#2563eb',
+                                            fontWeight: 800,
+                                            fontSize: 13,
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            wordBreak: 'break-word',
+                                          }}
+                                        >
+                                          📄 {attachment.originalName}
+                                        </button>
+
+                                        <div
+                                          style={{
+                                            color:
+                                              '#64748b',
+                                            fontSize:
+                                              12,
+                                            marginTop:
+                                              3,
+                                          }}
+                                        >
+                                          {formatFileSize(
+                                            attachment.size,
+                                          )}
+                                        </div>
+                                      </div>
+                                    ),
+                                  )
+                                )}
+                              </div>
+                            )}
+                          </td>
+
+                          <td
+                            style={{
+                              padding: 12,
+                              borderBottom:
+                                '1px solid #f1f5f9',
+                              textAlign:
+                                'right',
+                              whiteSpace:
+                                'nowrap',
+                            }}
+                          >
+                            <Link
+                              href={`/admin/projects/edit?id=${project.id}`}
+                              style={{
+                                fontWeight:
+                                  800,
+                                textDecoration:
+                                  'none',
+                                marginRight:
+                                  14,
+                                color:
+                                  '#2563eb',
+                              }}
+                            >
+                              Edit
+                            </Link>
+
+                            <button
+                              onClick={() =>
+                                deleteProject(
+                                  project.id,
+                                )
+                              }
+                              style={{
+                                border:
+                                  '1px solid #fecaca',
+                                background:
+                                  '#fff1f2',
+                                color:
+                                  '#be123c',
+                                borderRadius:
+                                  10,
+                                padding:
+                                  '7px 11px',
+                                fontWeight:
+                                  800,
+                                cursor:
+                                  'pointer',
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    },
+                  )}
+
+                  {filteredProjects.length ===
+                    0 && (
+                      <tr>
                         <td
+                          colSpan={8}
                           style={{
-                            padding: 12,
-                            borderBottom:
-                              '1px solid #f1f5f9',
+                            padding: 18,
                           }}
                         >
                           <strong>
-                            {customerLabel}
+                            No matching projects
+                            found.
                           </strong>
-                        </td>
 
-                        <td
-                          style={{
-                            padding: 12,
-                            borderBottom:
-                              '1px solid #f1f5f9',
-                            textAlign: 'right',
-                          }}
-                        >
-                          <Link
-                            href={`/admin/projects/edit?id=${project.id}`}
+                          <div
                             style={{
-                              fontWeight: 800,
-                              textDecoration: 'none',
-                              marginRight: 14,
-                              color: '#2563eb',
+                              color:
+                                '#64748b',
+                              marginTop: 4,
                             }}
                           >
-                            Edit
-                          </Link>
-
-                          <button
-                            onClick={() =>
-                              deleteProject(project.id)
-                            }
-                            style={{
-                              border:
-                                '1px solid #fecaca',
-                              background: '#fff1f2',
-                              color: '#be123c',
-                              borderRadius: 10,
-                              padding: '7px 11px',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Delete
-                          </button>
+                            Try changing your
+                            search or status
+                            filter.
+                          </div>
                         </td>
                       </tr>
-                    );
-                  })}
-
-                  {filteredProjects.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        style={{
-                          padding: 18,
-                        }}
-                      >
-                        <strong>
-                          No matching projects found.
-                        </strong>
-
-                        <div
-                          style={{
-                            color: '#64748b',
-                            marginTop: 4,
-                          }}
-                        >
-                          Try changing your search or
-                          status filter.
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                    )}
                 </tbody>
               </table>
             </div>

@@ -11,6 +11,16 @@ type Customer = {
   description?: string | null;
 };
 
+type ProjectAttachment = {
+  id: string;
+  projectId: string;
+  originalName: string;
+  storageKey: string;
+  mimeType: string;
+  size: number;
+  uploadedAt: string;
+};
+
 type Project = {
   id: string;
   title: string;
@@ -29,6 +39,17 @@ export default function CustomerDashboardPage() {
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [attachments, setAttachments] = useState<
+    Record<string, ProjectAttachment[]>
+  >({});
+
+  const [selectedFiles, setSelectedFiles] = useState<
+    Record<string, File | null>
+  >({});
+
+  const [uploadingProjectId, setUploadingProjectId] =
+    useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -88,6 +109,30 @@ export default function CustomerDashboardPage() {
 
         setCustomer(customerData);
         setProjects(projectsData);
+
+        const attachmentEntries = await Promise.all(
+          projectsData.map(async (project) => {
+            const response = await fetch(
+              `${API_URL}/projects/${project.id}/attachments`,
+              {
+                headers,
+              }
+            );
+
+            if (!response.ok) {
+              return [project.id, []] as const;
+            }
+
+            const data =
+              (await response.json()) as ProjectAttachment[];
+
+            return [project.id, data] as const;
+          })
+        );
+
+        setAttachments(
+          Object.fromEntries(attachmentEntries)
+        );
       } catch {
         setError("Could not load your account.");
       } finally {
@@ -97,6 +142,68 @@ export default function CustomerDashboardPage() {
 
     loadCustomerData();
   }, [router]);
+
+  async function uploadAttachment(projectId: string) {
+    const file = selectedFiles[projectId];
+
+    if (!file) {
+      alert("Please select a file first.");
+      return;
+    }
+
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-customer-token"
+    );
+
+    if (!token) {
+      router.replace("/customer/login");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setUploadingProjectId(projectId);
+
+    try {
+      const response = await fetch(
+        `${API_URL}/projects/${projectId}/attachments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Upload failed.");
+        return;
+      }
+
+      setAttachments((current) => ({
+        ...current,
+        [projectId]: [
+          data,
+          ...(current[projectId] || []),
+        ],
+      }));
+
+      setSelectedFiles((current) => ({
+        ...current,
+        [projectId]: null,
+      }));
+
+      alert("File uploaded successfully.");
+    } catch {
+      alert("Could not upload file.");
+    } finally {
+      setUploadingProjectId(null);
+    }
+  }
 
   function logout() {
     localStorage.removeItem(
@@ -145,7 +252,7 @@ export default function CustomerDashboardPage() {
             <h1>Customer Portal</h1>
 
             <p style={{ color: "#64748b" }}>
-              View your account and projects.
+              View your account, projects and attachments.
             </p>
           </div>
 
@@ -216,39 +323,138 @@ export default function CustomerDashboardPage() {
                     gap: 16,
                   }}
                 >
-                  {projects.map((project) => (
-                    <article
-                      key={project.id}
-                      style={{
-                        background: "white",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: 16,
-                        padding: 20,
-                      }}
-                    >
-                      <h3>{project.title}</h3>
+                  {projects.map((project) => {
+                    const projectAttachments =
+                      attachments[project.id] || [];
 
-                      <p>
-                        <strong>Status:</strong>{" "}
-                        {project.status.replaceAll("_", " ")}
-                      </p>
+                    return (
+                      <article
+                        key={project.id}
+                        style={{
+                          background: "white",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: 16,
+                          padding: 20,
+                        }}
+                      >
+                        <h3>{project.title}</h3>
 
-                      <p>
-                        {project.description ||
-                          "No description"}
-                      </p>
+                        <p>
+                          <strong>Status:</strong>{" "}
+                          {project.status.replaceAll("_", " ")}
+                        </p>
 
-                      <p>
-                        <strong>Start:</strong>{" "}
-                        {project.startDate || "Not set"}
-                      </p>
+                        <p>
+                          {project.description ||
+                            "No description"}
+                        </p>
 
-                      <p>
-                        <strong>Due:</strong>{" "}
-                        {project.dueDate || "Not set"}
-                      </p>
-                    </article>
-                  ))}
+                        <p>
+                          <strong>Start:</strong>{" "}
+                          {project.startDate || "Not set"}
+                        </p>
+
+                        <p>
+                          <strong>Due:</strong>{" "}
+                          {project.dueDate || "Not set"}
+                        </p>
+
+                        <hr
+                          style={{
+                            margin: "20px 0",
+                            border: 0,
+                            borderTop:
+                              "1px solid #e2e8f0",
+                          }}
+                        />
+
+                        <h4>Attachments</h4>
+
+                        <p
+                          style={{
+                            color: "#64748b",
+                            fontSize: 14,
+                          }}
+                        >
+                          PDF, JPG, PNG or TXT. Maximum 5 MB
+                          per file and 5 files per project.
+                        </p>
+
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.txt"
+                          onChange={(event) => {
+                            const file =
+                              event.target.files?.[0] || null;
+
+                            setSelectedFiles((current) => ({
+                              ...current,
+                              [project.id]: file,
+                            }));
+                          }}
+                        />
+
+                        <button
+                          onClick={() =>
+                            uploadAttachment(project.id)
+                          }
+                          disabled={
+                            uploadingProjectId === project.id
+                          }
+                          style={{
+                            marginLeft: 10,
+                            padding: "8px 14px",
+                            background: "#2563eb",
+                            color: "white",
+                            border: "none",
+                            borderRadius: 8,
+                            cursor: "pointer",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {uploadingProjectId === project.id
+                            ? "Uploading..."
+                            : "Upload File"}
+                        </button>
+
+                        <div style={{ marginTop: 18 }}>
+                          {projectAttachments.length === 0 ? (
+                            <p>No attachments yet.</p>
+                          ) : (
+                            projectAttachments.map(
+                              (attachment) => (
+                                <div
+                                  key={attachment.id}
+                                  style={{
+                                    padding: "10px 0",
+                                    borderBottom:
+                                      "1px solid #f1f5f9",
+                                  }}
+                                >
+                                  <strong>
+                                    {attachment.originalName}
+                                  </strong>
+
+                                  <div
+                                    style={{
+                                      color: "#64748b",
+                                      fontSize: 13,
+                                      marginTop: 4,
+                                    }}
+                                  >
+                                    {(
+                                      attachment.size / 1024
+                                    ).toFixed(1)}{" "}
+                                    KB
+                                  </div>
+                                </div>
+                              )
+                            )
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </section>
