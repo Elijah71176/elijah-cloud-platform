@@ -345,6 +345,62 @@ export default function ProjectsPage() {
     });
   }
 
+  async function deleteAttachment(
+    projectId: string,
+    attachmentId: string,
+  ) {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this attachment?',
+    );
+
+    if (!confirmed) return;
+
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token',
+    );
+
+    if (!token) {
+      alert(
+        'Admin session not found. Please log in again.',
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_URL}/projects/${projectId}/attachments/${attachmentId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        alert('Could not delete attachment.');
+        return;
+      }
+
+      setAttachments((current) => ({
+        ...current,
+        [projectId]:
+          current[projectId]?.filter(
+            (attachment) =>
+              attachment.id !== attachmentId,
+          ) || [],
+      }));
+
+      alert(
+        'Attachment deleted successfully.',
+      );
+    } catch {
+      alert(
+        'Could not delete attachment.',
+      );
+    }
+  }
+
   function toggleAttachments(
     projectId: string,
   ) {
@@ -889,21 +945,24 @@ export default function ProjectsPage() {
                                     No files uploaded.
                                   </div>
                                 ) : (
-                                  projectAttachments.map(
-                                    (
-                                      attachment,
-                                    ) => (
+                                  projectAttachments.map((attachment) => (
+                                    <div
+                                      key={attachment.id}
+                                      style={{
+                                        padding: '8px 0',
+                                        borderBottom: '1px solid #e2e8f0',
+                                      }}
+                                    >
                                       <div
-                                        key={
-                                          attachment.id
-                                        }
                                         style={{
-                                          padding:
-                                            '8px 0',
-                                          borderBottom:
-                                            '1px solid #e2e8f0',
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          gap: 10,
+                                          flexWrap: 'wrap',
                                         }}
                                       >
+                                        {/* DOWNLOAD ATTACHMENT */}
                                         <button
                                           onClick={async () => {
                                             const token = localStorage.getItem(
@@ -927,20 +986,28 @@ export default function ProjectsPage() {
                                             );
 
                                             if (!response.ok) {
-                                              alert('Could not download attachment.');
+                                              alert(
+                                                'Could not download attachment.',
+                                              );
                                               return;
                                             }
 
                                             const blob = await response.blob();
-                                            const url = window.URL.createObjectURL(blob);
 
-                                            const link = document.createElement('a');
+                                            const url =
+                                              window.URL.createObjectURL(blob);
+
+                                            const link =
+                                              document.createElement('a');
 
                                             link.href = url;
-                                            link.download = attachment.originalName;
+                                            link.download =
+                                              attachment.originalName;
 
                                             document.body.appendChild(link);
+
                                             link.click();
+
                                             link.remove();
 
                                             window.URL.revokeObjectURL(url);
@@ -960,23 +1027,41 @@ export default function ProjectsPage() {
                                           📄 {attachment.originalName}
                                         </button>
 
-                                        <div
+                                        {/* DELETE ATTACHMENT */}
+                                        <button
+                                          onClick={() =>
+                                            deleteAttachment(
+                                              project.id,
+                                              attachment.id,
+                                            )
+                                          }
                                           style={{
-                                            color:
-                                              '#64748b',
-                                            fontSize:
-                                              12,
-                                            marginTop:
-                                              3,
+                                            padding: '5px 9px',
+                                            background: '#fff1f2',
+                                            color: '#be123c',
+                                            border: '1px solid #fecaca',
+                                            borderRadius: 8,
+                                            cursor: 'pointer',
+                                            fontWeight: 700,
+                                            fontSize: 12,
                                           }}
                                         >
-                                          {formatFileSize(
-                                            attachment.size,
-                                          )}
-                                        </div>
+                                          Delete
+                                        </button>
                                       </div>
-                                    ),
-                                  )
+
+                                      {/* FILE SIZE */}
+                                      <div
+                                        style={{
+                                          color: '#64748b',
+                                          fontSize: 12,
+                                          marginTop: 3,
+                                        }}
+                                      >
+                                        {formatFileSize(attachment.size)}
+                                      </div>
+                                    </div>
+                                  ))
                                 )}
                               </div>
                             )}
@@ -1039,6 +1124,7 @@ export default function ProjectsPage() {
                       );
                     },
                   )}
+
 
                   {filteredProjects.length ===
                     0 && (

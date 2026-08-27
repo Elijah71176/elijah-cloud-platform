@@ -39,6 +39,7 @@ export default function CustomerDashboardPage() {
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+
   const [attachments, setAttachments] = useState<
     Record<string, ProjectAttachment[]>
   >({});
@@ -203,6 +204,52 @@ export default function CustomerDashboardPage() {
     } finally {
       setUploadingProjectId(null);
     }
+  }
+
+  async function deleteAttachment(
+    projectId: string,
+    attachmentId: string
+  ) {
+    const confirmed = window.confirm(
+      "Delete this attachment?"
+    );
+
+    if (!confirmed) return;
+
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-customer-token"
+    );
+
+    if (!token) {
+      router.replace("/customer/login");
+      return;
+    }
+
+    const response = await fetch(
+      `${API_URL}/projects/${projectId}/attachments/${attachmentId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      alert("Could not delete attachment.");
+      return;
+    }
+
+    setAttachments((current) => ({
+      ...current,
+      [projectId]:
+        current[projectId]?.filter(
+          (attachment) =>
+            attachment.id !== attachmentId
+        ) || [],
+    }));
+
+    alert("Attachment deleted.");
   }
 
   function logout() {
@@ -380,19 +427,81 @@ export default function CustomerDashboardPage() {
                           per file and 5 files per project.
                         </p>
 
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png,.txt"
-                          onChange={(event) => {
-                            const file =
-                              event.target.files?.[0] || null;
-
-                            setSelectedFiles((current) => ({
-                              ...current,
-                              [project.id]: file,
-                            }));
+                        <label
+                          style={{
+                            display: "block",
+                            border: "2px dashed #93c5fd",
+                            background: "#eff6ff",
+                            borderRadius: 14,
+                            padding: 24,
+                            textAlign: "center",
+                            cursor: "pointer",
+                            marginTop: 12,
                           }}
-                        />
+                        >
+                          <div
+                            style={{
+                              fontSize: 30,
+                              marginBottom: 8,
+                            }}
+                          >
+                            📎
+                          </div>
+
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              color: "#1d4ed8",
+                              marginBottom: 6,
+                            }}
+                          >
+                            Click to choose a file
+                          </div>
+
+                          <div
+                            style={{
+                              color: "#64748b",
+                              fontSize: 13,
+                            }}
+                          >
+                            PDF, JPG, PNG or TXT • Max 5 MB
+                          </div>
+
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,.txt"
+                            style={{ display: "none" }}
+                            onChange={(event) => {
+                              const file =
+                                event.target.files?.[0] ||
+                                null;
+
+                              setSelectedFiles(
+                                (current) => ({
+                                  ...current,
+                                  [project.id]: file,
+                                })
+                              );
+                            }}
+                          />
+                        </label>
+
+                        {selectedFiles[project.id] && (
+                          <div
+                            style={{
+                              marginTop: 12,
+                              padding: "10px 12px",
+                              background: "#f8fafc",
+                              border:
+                                "1px solid #e2e8f0",
+                              borderRadius: 10,
+                              fontSize: 14,
+                            }}
+                          >
+                            <strong>Selected:</strong>{" "}
+                            {selectedFiles[project.id]?.name}
+                          </div>
+                        )}
 
                         <button
                           onClick={() =>
@@ -402,14 +511,21 @@ export default function CustomerDashboardPage() {
                             uploadingProjectId === project.id
                           }
                           style={{
-                            marginLeft: 10,
-                            padding: "8px 14px",
+                            marginTop: 12,
+                            padding: "10px 16px",
                             background: "#2563eb",
                             color: "white",
                             border: "none",
-                            borderRadius: 8,
-                            cursor: "pointer",
-                            fontWeight: 700,
+                            borderRadius: 10,
+                            cursor:
+                              uploadingProjectId === project.id
+                                ? "not-allowed"
+                                : "pointer",
+                            fontWeight: 800,
+                            opacity:
+                              uploadingProjectId === project.id
+                                ? 0.7
+                                : 1,
                           }}
                         >
                           {uploadingProjectId === project.id
@@ -431,21 +547,58 @@ export default function CustomerDashboardPage() {
                                       "1px solid #f1f5f9",
                                   }}
                                 >
-                                  <strong>
-                                    {attachment.originalName}
-                                  </strong>
-
                                   <div
                                     style={{
-                                      color: "#64748b",
-                                      fontSize: 13,
-                                      marginTop: 4,
+                                      display: "flex",
+                                      justifyContent:
+                                        "space-between",
+                                      alignItems: "center",
+                                      gap: 12,
+                                      flexWrap: "wrap",
                                     }}
                                   >
-                                    {(
-                                      attachment.size / 1024
-                                    ).toFixed(1)}{" "}
-                                    KB
+                                    <div>
+                                      <strong>
+                                        📄{" "}
+                                        {attachment.originalName}
+                                      </strong>
+
+                                      <div
+                                        style={{
+                                          color: "#64748b",
+                                          fontSize: 13,
+                                          marginTop: 4,
+                                        }}
+                                      >
+                                        {(
+                                          attachment.size /
+                                          1024
+                                        ).toFixed(1)}{" "}
+                                        KB
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      onClick={() =>
+                                        deleteAttachment(
+                                          project.id,
+                                          attachment.id
+                                        )
+                                      }
+                                      style={{
+                                        padding: "6px 10px",
+                                        background: "#fff1f2",
+                                        color: "#be123c",
+                                        border:
+                                          "1px solid #fecaca",
+                                        borderRadius: 8,
+                                        cursor: "pointer",
+                                        fontWeight: 700,
+                                        fontSize: 12,
+                                      }}
+                                    >
+                                      Delete
+                                    </button>
                                   </div>
                                 </div>
                               )

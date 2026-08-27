@@ -113,6 +113,33 @@ export class ProjectsController {
     fileStream.pipe(res);
   }
 
+  @Delete(':projectId/attachments/:attachmentId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'CUSTOMER')
+  async deleteAttachment(
+    @Param('projectId', new ParseUUIDPipe()) projectId: string,
+    @Param('attachmentId', new ParseUUIDPipe()) attachmentId: string,
+    @Req() req: any,
+  ) {
+    if (req.user.role === 'CUSTOMER') {
+      await this.projects.verifyCustomerOwnsProject(
+        projectId,
+        req.user.email,
+      );
+    }
+
+    const attachment =
+      await this.projects.deleteAttachment(
+        projectId,
+        attachmentId,
+      );
+
+    return {
+      deleted: true,
+      attachmentId: attachment.id,
+    };
+  }
+
   // CUSTOMER: upload attachment to own project
   @Post(':id/attachments')
   @UseGuards(AuthGuard('jwt'), RolesGuard)

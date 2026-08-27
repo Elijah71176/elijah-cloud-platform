@@ -13,6 +13,9 @@ import { Customer } from '../customers/customers.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
+import { unlink } from 'fs/promises';
+import { join } from 'path';
+
 @Injectable()
 export class ProjectsService {
   private readonly MAX_FILES_PER_PROJECT = 5;
@@ -213,6 +216,35 @@ export class ProjectsService {
         'Attachment not found',
       );
     }
+
+    return attachment;
+  }
+
+  async deleteAttachment(
+    projectId: string,
+    attachmentId: string,
+  ) {
+    const attachment = await this.findAttachmentById(
+      projectId,
+      attachmentId,
+    );
+
+    const filePath = join(
+      process.cwd(),
+      'uploads',
+      'projects',
+      attachment.storageKey,
+    );
+
+    try {
+      await unlink(filePath);
+    } catch (error: any) {
+      if (error?.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    await this.attachmentRepo.remove(attachment);
 
     return attachment;
   }
