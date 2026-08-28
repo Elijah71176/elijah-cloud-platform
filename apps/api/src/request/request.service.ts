@@ -9,7 +9,7 @@ export class RequestService {
   constructor(
     @InjectRepository(ServiceRequest)
     private readonly requestRepository: Repository<ServiceRequest>,
-  ) {}
+  ) { }
 
   async create(createRequestDto: CreateRequestDto) {
     const request = this.requestRepository.create(createRequestDto);
@@ -24,39 +24,46 @@ export class RequestService {
 
   async findAll() {
     return this.requestRepository.find({
-      order: { createdAt: 'DESC' }, 
-   });
-    
+      order: { createdAt: 'DESC' },
+    });
+
+  }
+
+  async findMyRequests(email: string) {
+    return this.requestRepository.find({
+      where: { email },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async updateStatus(
-  id: string,
-  status: 'pending' | 'temporarily_closed' | 'closed',
-) {
-  const request = await this.requestRepository.findOne({
-    where: { id },
-  });
+    id: string,
+    status: 'pending' | 'temporarily_closed' | 'closed',
+  ) {
+    const request = await this.requestRepository.findOne({
+      where: { id },
+    });
 
-  if (!request) {
-    throw new Error('Service request not found');
+    if (!request) {
+      throw new Error('Service request not found');
+    }
+
+    request.status = status;
+
+    return this.requestRepository.save(request);
   }
+  async markConverted(id: string) {
+    const request = await this.requestRepository.findOne({
+      where: { id },
+    });
 
-  request.status = status;
+    if (!request) {
+      throw new Error('Service request not found');
+    }
 
-  return this.requestRepository.save(request);
-}
-async markConverted(id: string) {
-  const request = await this.requestRepository.findOne({
-    where: { id },
-  });
+    request.converted = true;
 
-  if (!request) {
-    throw new Error('Service request not found');
+    return this.requestRepository.save(request);
   }
-
-  request.converted = true;
-
-  return this.requestRepository.save(request);
-}
 
 }
