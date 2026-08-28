@@ -1,4 +1,6 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+
+
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, Max, Min, IsInt, } from 'class-validator';
 import { ProjectStatus } from '../project.entity';
 
 export class UpdateProjectDto {
@@ -25,4 +27,10 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsDateString()
   dueDate?: string;
+
+  @IsOptional()
+@IsInt()
+@Min(0)
+@Max(100)
+progress?: number;
 }

@@ -29,6 +29,7 @@ type Project = {
   dueDate?: string | null;
   status: "planned" | "active" | "on_hold" | "done";
   customerId: string;
+  progress: number;
 };
 type ServiceRequest = {
   id: string;
@@ -627,6 +628,46 @@ export default function CustomerDashboardPage() {
                           </span>
                         </p>
 
+                        {/* Project Progress */}
+                        <div
+                          style={{
+                            marginTop: 16,
+                            marginBottom: 16,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginBottom: 8,
+                              fontWeight: 700,
+                            }}
+                          >
+                            <span>Progress</span>
+                            <span>{project.progress ?? 0}%</span>
+                          </div>
+
+                          <div
+                            style={{
+                              width: "100%",
+                              height: 12,
+                              background: "#e2e8f0",
+                              borderRadius: 999,
+                              overflow: "hidden",
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: `${project.progress ?? 0}%`,
+                                height: "100%",
+                                background: "#2563eb",
+                                borderRadius: 999,
+                                transition: "width 0.3s ease",
+                              }}
+                            />
+                          </div>
+                        </div>
+
                         <p>
                           {project.description ||
                             "No description"}
@@ -635,11 +676,6 @@ export default function CustomerDashboardPage() {
                         <p>
                           <strong>Start:</strong>{" "}
                           {project.startDate || "Not set"}
-                        </p>
-
-                        <p>
-                          <strong>Due:</strong>{" "}
-                          {project.dueDate || "Not set"}
                         </p>
 
                         <hr

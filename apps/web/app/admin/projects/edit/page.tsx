@@ -11,6 +11,7 @@ type Project = {
   id: string;
   title: string;
   status: 'planned' | 'active' | 'on_hold' | 'done';
+  progress: number;
   description?: string;
   startDate?: string;
   dueDate?: string;
@@ -23,11 +24,10 @@ function EditProjectForm() {
   const [title, setTitle] = useState('');
   const [status, setStatus] =
     useState<Project['status']>('planned');
-
+  const [progress, setProgress] = useState(0);
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +37,15 @@ function EditProjectForm() {
         return;
       }
 
-      const res = await fetch(`${API_URL}/projects`);
+      const token = localStorage.getItem(
+        'elijah-cloud-platform-token'
+      );
+
+      const res = await fetch(`${API_URL}/projects`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.ok) {
         alert('Could not load project');
@@ -51,6 +59,7 @@ function EditProjectForm() {
       if (project) {
         setTitle(project.title);
         setStatus(project.status);
+        setProgress(project.progress ?? 0);
         setDescription(project.description || '');
         setStartDate(project.startDate || '');
         setDueDate(project.dueDate || '');
@@ -68,14 +77,20 @@ function EditProjectForm() {
       return;
     }
 
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
     const res = await fetch(`${API_URL}/projects/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         title,
         status,
+        progress,
         description,
         startDate,
         dueDate,
@@ -173,6 +188,35 @@ function EditProjectForm() {
           </select>
         </div>
 
+        {/* Progress */}
+        <div style={{ marginTop: 20 }}>
+          <label
+            htmlFor="progress"
+            style={{
+              display: 'block',
+              marginBottom: 8,
+              fontWeight: 600,
+            }}
+          >
+            Progress: {progress}%
+          </label>
+
+          <input
+            id="progress"
+            type="range"
+            min="0"
+            max="100"
+            value={progress}
+            onChange={(e) =>
+              setProgress(Number(e.target.value))
+            }
+            style={{
+              width: '100%',
+              maxWidth: 600,
+            }}
+          />
+        </div>
+
         {/* Description */}
         <div style={{ marginTop: 20 }}>
           <label
@@ -189,7 +233,9 @@ function EditProjectForm() {
           <textarea
             id="description"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) =>
+              setDescription(e.target.value)
+            }
             placeholder="Describe the project, requirements, goals, or important notes..."
             rows={6}
             style={{
@@ -225,7 +271,9 @@ function EditProjectForm() {
             id="startDate"
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(e) =>
+              setStartDate(e.target.value)
+            }
             style={{
               padding: 10,
               border: '1px solid #cbd5e1',
@@ -251,7 +299,9 @@ function EditProjectForm() {
             id="dueDate"
             type="date"
             value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
+            onChange={(e) =>
+              setDueDate(e.target.value)
+            }
             style={{
               padding: 10,
               border: '1px solid #cbd5e1',

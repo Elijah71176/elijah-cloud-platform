@@ -34,6 +34,9 @@ export class Project {
   })
   status!: ProjectStatus;
 
+  @Column({ type: 'int', default: 0 })
+  progress!: number;
+
   @ManyToOne(() => Customer, (customer) => customer.projects, {
     onDelete: 'CASCADE',
   })
