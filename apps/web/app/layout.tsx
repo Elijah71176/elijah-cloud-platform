@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import SessionLink from "./components/SessionLink";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -88,15 +89,7 @@ export default function RootLayout({
               Contact
             </Link>
 
-            <Link
-              href="/login"
-              style={{
-                ...linkStyle,
-                color: "#2563eb",
-              }}
-            >
-              Login
-            </Link>
+            <SessionLink />
           </div>
         </nav>
 

@@ -44,6 +44,16 @@ export default function AdminLoginPage() {
         return;
       }
 
+      // Remove any old customer session.
+      localStorage.removeItem(
+        'elijah-cloud-platform-customer-token',
+      );
+
+      localStorage.removeItem(
+        'elijah-cloud-platform-customer-user',
+      );
+
+      // Save the admin session.
       localStorage.setItem(
         'elijah-cloud-platform-token',
         data.accessToken,
@@ -54,8 +64,8 @@ export default function AdminLoginPage() {
         JSON.stringify(data.user),
       );
 
-      // Keep this temporarily because the current
-      // admin layout still checks the old flag.
+      // Keep this because the current admin layout
+      // still checks this flag.
       localStorage.setItem(
         'elijah-cloud-platform-admin',
         'true',
