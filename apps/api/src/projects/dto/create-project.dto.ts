@@ -1,5 +1,13 @@
+
+
 import { ProjectStatus } from '../project.entity';
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, Max, Min, IsInt,
+
+
+
+} from 'class-validator';
+
 
 
 export class CreateProjectDto {
@@ -24,4 +32,10 @@ export class CreateProjectDto {
   @IsOptional()
   @IsDateString()
   dueDate?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  progress?: number;
 }
