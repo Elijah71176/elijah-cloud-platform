@@ -357,6 +357,119 @@ export default function CustomerDashboardPage() {
                 {customer.description || "No description"}
               </p>
             </section>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(160px, 1fr))",
+                gap: 16,
+                marginTop: 24,
+              }}
+            >
+              <div
+                style={{
+                  background: "white",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 14,
+                  padding: 20,
+                }}
+              >
+                <p
+                  style={{
+                    color: "#64748b",
+                    fontWeight: 700,
+                    margin: 0,
+                  }}
+                >
+                  Total Projects
+                </p>
+
+                <h2 style={{ fontSize: 32, marginBottom: 0 }}>
+                  {projects.length}
+                </h2>
+              </div>
+
+              <div
+                style={{
+                  background: "white",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 14,
+                  padding: 20,
+                }}
+              >
+                <p
+                  style={{
+                    color: "#64748b",
+                    fontWeight: 700,
+                    margin: 0,
+                  }}
+                >
+                  Active
+                </p>
+
+                <h2 style={{ fontSize: 32, marginBottom: 0 }}>
+                  {
+                    projects.filter(
+                      (project) => project.status === "active"
+                    ).length
+                  }
+                </h2>
+              </div>
+
+              <div
+                style={{
+                  background: "white",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 14,
+                  padding: 20,
+                }}
+              >
+                <p
+                  style={{
+                    color: "#64748b",
+                    fontWeight: 700,
+                    margin: 0,
+                  }}
+                >
+                  Planned
+                </p>
+
+                <h2 style={{ fontSize: 32, marginBottom: 0 }}>
+                  {
+                    projects.filter(
+                      (project) => project.status === "planned"
+                    ).length
+                  }
+                </h2>
+              </div>
+
+              <div
+                style={{
+                  background: "white",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 14,
+                  padding: 20,
+                }}
+              >
+                <p
+                  style={{
+                    color: "#64748b",
+                    fontWeight: 700,
+                    margin: 0,
+                  }}
+                >
+                  Completed
+                </p>
+
+                <h2 style={{ fontSize: 32, marginBottom: 0 }}>
+                  {
+                    projects.filter(
+                      (project) => project.status === "done"
+                    ).length
+                  }
+                </h2>
+              </div>
+            </div>
 
             <section style={{ marginTop: 30 }}>
               <h2>My Projects</h2>
@@ -388,7 +501,39 @@ export default function CustomerDashboardPage() {
 
                         <p>
                           <strong>Status:</strong>{" "}
-                          {project.status.replaceAll("_", " ")}
+
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "4px 10px",
+                              borderRadius: 999,
+                              fontSize: 13,
+                              fontWeight: 800,
+                              background:
+                                project.status === "done"
+                                  ? "#dcfce7"
+                                  : project.status === "active"
+                                    ? "#dbeafe"
+                                    : project.status === "on_hold"
+                                      ? "#fef3c7"
+                                      : "#f1f5f9",
+                              color:
+                                project.status === "done"
+                                  ? "#166534"
+                                  : project.status === "active"
+                                    ? "#1d4ed8"
+                                    : project.status === "on_hold"
+                                      ? "#92400e"
+                                      : "#475569",
+                            }}
+                          >
+                            {project.status === "done"
+                              ? "Completed"
+                              : project.status === "on_hold"
+                                ? "On Hold"
+                                : project.status.charAt(0).toUpperCase() +
+                                project.status.slice(1)}
+                          </span>
                         </p>
 
                         <p>
