@@ -30,7 +30,17 @@ type Project = {
   status: "planned" | "active" | "on_hold" | "done";
   customerId: string;
 };
-
+type ServiceRequest = {
+  id: string;
+  name: string;
+  email: string;
+  service: string;
+  telephone?: string;
+  message: string;
+  status: "pending" | "temporarily_closed" | "closed";
+  converted: boolean;
+  createdAt: string;
+};
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -39,7 +49,7 @@ export default function CustomerDashboardPage() {
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [attachments, setAttachments] = useState<
     Record<string, ProjectAttachment[]>
   >({});
@@ -55,94 +65,112 @@ export default function CustomerDashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function loadCustomerData() {
-      try {
-        const token = localStorage.getItem(
+  async function loadCustomerData() {
+    try {
+      const token = localStorage.getItem(
+        "elijah-cloud-platform-customer-token"
+      );
+
+      if (!token) {
+        router.replace("/customer/login");
+        return;
+      }
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      const [
+        customerResponse,
+        projectsResponse,
+        requestsResponse,
+      ] = await Promise.all([
+        fetch(`${API_URL}/customers/me`, {
+          headers,
+        }),
+
+        fetch(`${API_URL}/projects/my`, {
+          headers,
+        }),
+
+        fetch(`${API_URL}/request/my`, {
+          headers,
+        }),
+      ]);
+
+      if (
+        customerResponse.status === 401 ||
+        customerResponse.status === 403 ||
+        projectsResponse.status === 401 ||
+        projectsResponse.status === 403 ||
+        requestsResponse.status === 401 ||
+        requestsResponse.status === 403
+      ) {
+        localStorage.removeItem(
           "elijah-cloud-platform-customer-token"
         );
 
-        if (!token) {
-          router.replace("/customer/login");
-          return;
-        }
-
-        const headers = {
-          Authorization: `Bearer ${token}`,
-        };
-
-        const [customerResponse, projectsResponse] =
-          await Promise.all([
-            fetch(`${API_URL}/customers/me`, {
-              headers,
-            }),
-            fetch(`${API_URL}/projects/my`, {
-              headers,
-            }),
-          ]);
-
-        if (
-          customerResponse.status === 401 ||
-          customerResponse.status === 403 ||
-          projectsResponse.status === 401 ||
-          projectsResponse.status === 403
-        ) {
-          localStorage.removeItem(
-            "elijah-cloud-platform-customer-token"
-          );
-
-          localStorage.removeItem(
-            "elijah-cloud-platform-customer-user"
-          );
-
-          router.replace("/customer/login");
-          return;
-        }
-
-        if (!customerResponse.ok || !projectsResponse.ok) {
-          throw new Error("Failed to load customer data");
-        }
-
-        const customerData =
-          (await customerResponse.json()) as Customer;
-
-        const projectsData =
-          (await projectsResponse.json()) as Project[];
-
-        setCustomer(customerData);
-        setProjects(projectsData);
-
-        const attachmentEntries = await Promise.all(
-          projectsData.map(async (project) => {
-            const response = await fetch(
-              `${API_URL}/projects/${project.id}/attachments`,
-              {
-                headers,
-              }
-            );
-
-            if (!response.ok) {
-              return [project.id, []] as const;
-            }
-
-            const data =
-              (await response.json()) as ProjectAttachment[];
-
-            return [project.id, data] as const;
-          })
+        localStorage.removeItem(
+          "elijah-cloud-platform-customer-user"
         );
 
-        setAttachments(
-          Object.fromEntries(attachmentEntries)
-        );
-      } catch {
-        setError("Could not load your account.");
-      } finally {
-        setLoading(false);
+        router.replace("/customer/login");
+        return;
       }
-    }
 
-    loadCustomerData();
-  }, [router]);
+      if (
+        !customerResponse.ok ||
+        !projectsResponse.ok ||
+        !requestsResponse.ok
+      ) {
+        throw new Error("Failed to load customer data");
+      }
+
+      const customerData =
+        (await customerResponse.json()) as Customer;
+
+      const projectsData =
+        (await projectsResponse.json()) as Project[];
+
+      const requestsData =
+        (await requestsResponse.json()) as ServiceRequest[];
+
+      setCustomer(customerData);
+      setProjects(projectsData);
+      setServiceRequests(requestsData);
+
+      const attachmentEntries = await Promise.all(
+        projectsData.map(async (project) => {
+          const response = await fetch(
+            `${API_URL}/projects/${project.id}/attachments`,
+            {
+              headers,
+            }
+          );
+
+          if (!response.ok) {
+            return [project.id, []] as const;
+          }
+
+          const data =
+            (await response.json()) as ProjectAttachment[];
+
+          return [project.id, data] as const;
+        })
+      );
+
+      setAttachments(
+        Object.fromEntries(attachmentEntries)
+      );
+    } catch {
+      setError("Could not load your account.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadCustomerData();
+}, [router]);
 
   async function uploadAttachment(projectId: string) {
     const file = selectedFiles[projectId];
@@ -470,7 +498,51 @@ export default function CustomerDashboardPage() {
                 </h2>
               </div>
             </div>
+<section style={{ marginTop: 30 }}>
+  <h2>My Service Requests</h2>
 
+  {serviceRequests.length === 0 ? (
+    <p>No service requests found.</p>
+  ) : (
+    <div
+      style={{
+        display: "grid",
+        gap: 16,
+      }}
+    >
+      {serviceRequests.map((request) => (
+        <article
+          key={request.id}
+          style={{
+            background: "white",
+            border: "1px solid #e2e8f0",
+            borderRadius: 16,
+            padding: 20,
+          }}
+        >
+          <h3>{request.service}</h3>
+
+          <p>
+            <strong>Status:</strong>{" "}
+            {request.status.replaceAll("_", " ")}
+          </p>
+
+          <p>{request.message}</p>
+
+          <p>
+            <strong>Converted to project:</strong>{" "}
+            {request.converted ? "Yes" : "No"}
+          </p>
+
+          <p>
+            <strong>Submitted:</strong>{" "}
+            {new Date(request.createdAt).toLocaleDateString()}
+          </p>
+        </article>
+      ))}
+    </div>
+  )}
+</section>
             <section style={{ marginTop: 30 }}>
               <h2>My Projects</h2>
 

@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
@@ -21,7 +22,7 @@ import { RolesGuard } from '../auth/roles.guard';
 export class RequestController {
   constructor(
     private readonly requestService: RequestService,
-  ) {}
+  ) { }
 
   // Public: visitors can submit service requests
   @Post()
@@ -31,6 +32,15 @@ export class RequestController {
     return this.requestService.create(createRequestDto);
   }
 
+  // Customer only - view own service requests
+  @Get('my')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('CUSTOMER')
+  findMyRequests(@Req() req: any) {
+    return this.requestService.findMyRequests(
+      req.user.email,
+    );
+  }
   // Admin only
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
