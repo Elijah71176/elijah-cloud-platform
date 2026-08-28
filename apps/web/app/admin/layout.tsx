@@ -46,9 +46,17 @@ export default function AdminLayout({
       "elijah-cloud-platform-admin"
     );
 
+    localStorage.removeItem(
+      "elijah-cloud-platform-token"
+    );
+
+    localStorage.removeItem(
+      "elijah-cloud-platform-user"
+    );
+
     setAuthorized(false);
 
-    router.replace("/admin/login");
+    router.replace("/login");
   }
 
   // Login page must always be visible

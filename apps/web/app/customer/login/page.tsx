@@ -44,6 +44,20 @@ export default function CustomerLoginPage() {
         return;
       }
 
+      // Remove any old admin session.
+      localStorage.removeItem(
+        "elijah-cloud-platform-token"
+      );
+
+      localStorage.removeItem(
+        "elijah-cloud-platform-user"
+      );
+
+      localStorage.removeItem(
+        "elijah-cloud-platform-admin"
+      );
+
+      // Save the customer session.
       localStorage.setItem(
         "elijah-cloud-platform-customer-token",
         data.accessToken
