@@ -29,6 +29,8 @@ function EditProjectForm() {
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [loading, setLoading] = useState(true);
+  const [updateMessage, setUpdateMessage] = useState('');
+  const [sendingUpdate, setSendingUpdate] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -103,6 +105,47 @@ function EditProjectForm() {
     }
 
     window.location.href = '/admin/projects';
+  }
+  async function handleProjectUpdate() {
+    if (!id) {
+      alert('Project ID is missing');
+      return;
+    }
+
+    if (!updateMessage.trim()) {
+      alert('Please enter a project update');
+      return;
+    }
+
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
+    try {
+      setSendingUpdate(true);
+
+      const res = await fetch(`${API_URL}/projects/updates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId: id,
+          message: updateMessage.trim(),
+        }),
+      });
+
+      if (!res.ok) {
+        alert('Could not send project update');
+        return;
+      }
+
+      setUpdateMessage('');
+      alert('Project update sent successfully');
+    } finally {
+      setSendingUpdate(false);
+    }
   }
 
   if (loading) {
@@ -326,6 +369,57 @@ function EditProjectForm() {
         >
           Update Project
         </button>
+
+        {/* Project Update Message */}
+        <div
+          style={{
+            marginTop: 30,
+            paddingTop: 24,
+            borderTop: '1px solid #e2e8f0',
+          }}
+        >
+          <h2>Project Updates</h2>
+
+          <p style={{ color: '#64748b' }}>
+            Send an update that the customer can see in their portal.
+          </p>
+
+          <textarea
+            value={updateMessage}
+            onChange={(e) => setUpdateMessage(e.target.value)}
+            placeholder="Write a project update..."
+            rows={4}
+            style={{
+              width: '100%',
+              maxWidth: 600,
+              padding: 12,
+              border: '1px solid #cbd5e1',
+              borderRadius: 8,
+              boxSizing: 'border-box',
+              resize: 'vertical',
+            }}
+          />
+
+          <div>
+            <button
+              type="button"
+              onClick={handleProjectUpdate}
+              disabled={sendingUpdate}
+              style={{
+                marginTop: 12,
+                padding: '10px 16px',
+                background: '#0f172a',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 8,
+                cursor: sendingUpdate ? 'not-allowed' : 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {sendingUpdate ? 'Sending...' : 'Send Update'}
+            </button>
+          </div>
+        </div>
 
         <div style={{ marginTop: 20 }}>
           <Link href="/admin/projects">

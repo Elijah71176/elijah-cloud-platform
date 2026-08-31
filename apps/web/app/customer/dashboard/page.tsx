@@ -31,6 +31,12 @@ type Project = {
   customerId: string;
   progress: number;
 };
+type ProjectUpdate = {
+  id: string;
+  projectId: string;
+  message: string;
+  createdAt: string;
+};
 type ServiceRequest = {
   id: string;
   name: string;
@@ -50,6 +56,9 @@ export default function CustomerDashboardPage() {
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectUpdates, setProjectUpdates] = useState<
+    Record<string, ProjectUpdate[]>
+  >({});
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [attachments, setAttachments] = useState<
     Record<string, ProjectAttachment[]>
@@ -159,6 +168,29 @@ export default function CustomerDashboardPage() {
             return [project.id, data] as const;
           })
         );
+        const updateEntries = await Promise.all(
+          projectsData.map(async (project) => {
+            const response = await fetch(
+              `${API_URL}/projects/${project.id}/updates`,
+              {
+                headers,
+              }
+            );
+
+            if (!response.ok) {
+              return [project.id, []] as const;
+            }
+
+            const data =
+              (await response.json()) as ProjectUpdate[];
+
+            return [project.id, data] as const;
+          })
+        );
+
+        setProjectUpdates(
+          Object.fromEntries(updateEntries)
+        );
 
         setAttachments(
           Object.fromEntries(attachmentEntries)
@@ -234,6 +266,7 @@ export default function CustomerDashboardPage() {
       setUploadingProjectId(null);
     }
   }
+
 
   async function deleteAttachment(
     projectId: string,
@@ -667,7 +700,62 @@ export default function CustomerDashboardPage() {
                             />
                           </div>
                         </div>
+                        <div
+                          style={{
+                            marginTop: 20,
+                            paddingTop: 16,
+                            borderTop: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <h3
+                            style={{
+                              marginBottom: 10,
+                              fontSize: 16,
+                            }}
+                          >
+                            Project Updates
+                          </h3>
+                          {/* Project Updates */}
+                          {(projectUpdates[project.id] || []).length === 0 ? (
+                            <p
+                              style={{
+                                margin: 0,
+                                color: "#64748b",
+                              }}
+                            >
+                              No updates yet.
+                            </p>
+                          ) : (
+                            (projectUpdates[project.id] || []).map((update) => (
+                              <div
+                                key={update.id}
+                                style={{
+                                  marginBottom: 12,
+                                  padding: 12,
+                                  background: "#f8fafc",
+                                  borderRadius: 8,
+                                }}
+                              >
+                                <p
+                                  style={{
+                                    margin: 0,
+                                    marginBottom: 6,
+                                  }}
+                                >
+                                  {update.message}
+                                </p>
 
+                                <small
+                                  style={{
+                                    color: "#64748b",
+                                  }}
+                                >
+                                  {new Date(update.createdAt).toLocaleString()}
+                                </small>
+                              </div>
+                            ))
+                          )}
+                        </div>
                         <p>
                           {project.description ||
                             "No description"}

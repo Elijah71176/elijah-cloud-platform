@@ -1,3 +1,4 @@
+
 import {
   BadRequestException,
   Body,
@@ -32,6 +33,7 @@ import { randomUUID } from 'crypto';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { CreateProjectUpdateDto } from './dto/create-project-update.dto';
 
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -209,6 +211,30 @@ export class ProjectsController {
     });
   }
 
+  // ADMIN only - create project update
+  @Post('updates')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
+  createProjectUpdate(
+    @Body() dto: CreateProjectUpdateDto,
+  ) {
+    return this.projects.createProjectUpdate(dto);
+  }
+  @Get(':id/updates')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'CUSTOMER')
+  async findProjectUpdates(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: any,
+  ) {
+    if (req.user.role === 'CUSTOMER') {
+      await this.projects.verifyCustomerOwnsProject(
+        id,
+        req.user.email,
+      );
+    }
+    return this.projects.findProjectUpdates(id);
+  }
   // ADMIN only
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)

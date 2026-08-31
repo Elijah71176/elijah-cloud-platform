@@ -7,6 +7,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { ProjectUpdate } from './project-update.entity';
+import { CreateProjectUpdateDto } from './dto/create-project-update.dto';
+
 import { Project } from './project.entity';
 import { ProjectAttachment } from './project-attachment.entity';
 import { Customer } from '../customers/customers.entity';
@@ -29,6 +32,9 @@ export class ProjectsService {
   ];
 
   constructor(
+    @InjectRepository(ProjectUpdate)
+    private readonly updateRepo: Repository<ProjectUpdate>,
+
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
 
@@ -38,6 +44,7 @@ export class ProjectsService {
     @InjectRepository(ProjectAttachment)
     private readonly attachmentRepo: Repository<ProjectAttachment>,
   ) { }
+
 
   async findOne(id: string) {
     const project = await this.projectRepo.findOne({
@@ -248,10 +255,10 @@ export class ProjectsService {
 
     return attachment;
   }
-
   async update(id: string, dto: UpdateProjectDto) {
     const project = await this.projectRepo.findOne({
       where: { id },
+
     });
 
     if (!project) {
@@ -259,6 +266,7 @@ export class ProjectsService {
         `Project ${id} not found`,
       );
     }
+
 
     Object.assign(project, dto);
 
@@ -279,5 +287,32 @@ export class ProjectsService {
     await this.projectRepo.remove(project);
 
     return { deleted: true };
+  }
+  async createProjectUpdate(dto: CreateProjectUpdateDto) {
+    const project = await this.projectRepo.findOne({
+      where: { id: dto.projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException(
+        `Project ${dto.projectId} not found`,
+      );
+    }
+
+    const projectUpdate = this.updateRepo.create({
+      projectId: dto.projectId,
+      message: dto.message,
+    });
+
+    return this.updateRepo.save(projectUpdate);
+  }
+
+  async findProjectUpdates(projectId: string) {
+    return this.updateRepo.find({
+      where: { projectId },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
   }
 }
