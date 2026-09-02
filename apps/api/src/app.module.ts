@@ -8,6 +8,8 @@ import { ProjectsModule } from './projects/projects.module';
 import { RequestModule } from './request/request.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AuthModule } from './auth/auth.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { MessagesModule } from './messages/messages.module';
 
 const isAwsRds =
   process.env.DATABASE_URL?.includes('rds.amazonaws.com') ?? false;
@@ -34,6 +36,8 @@ const isAwsRds =
     DashboardModule,
     UsersModule,
     AuthModule,
+    NotificationsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

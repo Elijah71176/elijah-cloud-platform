@@ -3,6 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+type ProjectMessage = {
+  id: string;
+  projectId: string;
+  senderEmail: string;
+  senderRole: "ADMIN" | "CUSTOMER";
+  message: string;
+  createdAt: string;
+};
+
 type Customer = {
   id: string;
   name: string;
@@ -48,6 +57,17 @@ type ServiceRequest = {
   converted: boolean;
   createdAt: string;
 };
+type Notification = {
+  id: string;
+  recipientEmail: string;
+  recipientRole: "ADMIN" | "CUSTOMER";
+  type: string;
+  title: string;
+  message: string;
+  projectId?: string | null;
+  isRead: boolean;
+  createdAt: string;
+};
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -60,12 +80,20 @@ export default function CustomerDashboardPage() {
     Record<string, ProjectUpdate[]>
   >({});
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [attachments, setAttachments] = useState<
     Record<string, ProjectAttachment[]>
   >({});
 
   const [selectedFiles, setSelectedFiles] = useState<
     Record<string, File | null>
+  >({});
+
+  const [projectMessages, setProjectMessages] = useState<
+    Record<string, ProjectMessage[]>
+  >({});
+  const [messageDrafts, setMessageDrafts] = useState<
+    Record<string, string>
   >({});
 
   const [uploadingProjectId, setUploadingProjectId] =
@@ -94,6 +122,7 @@ export default function CustomerDashboardPage() {
           customerResponse,
           projectsResponse,
           requestsResponse,
+          notificationsResponse,
         ] = await Promise.all([
           fetch(`${API_URL}/customers/me`, {
             headers,
@@ -106,6 +135,9 @@ export default function CustomerDashboardPage() {
           fetch(`${API_URL}/request/my`, {
             headers,
           }),
+          fetch(`${API_URL}/notifications/my`, {
+            headers,
+          }),
         ]);
 
         if (
@@ -114,7 +146,9 @@ export default function CustomerDashboardPage() {
           projectsResponse.status === 401 ||
           projectsResponse.status === 403 ||
           requestsResponse.status === 401 ||
-          requestsResponse.status === 403
+          requestsResponse.status === 403 ||
+          notificationsResponse.status === 401 ||
+          notificationsResponse.status === 403
         ) {
           localStorage.removeItem(
             "elijah-cloud-platform-customer-token"
@@ -145,9 +179,13 @@ export default function CustomerDashboardPage() {
         const requestsData =
           (await requestsResponse.json()) as ServiceRequest[];
 
+        const notificationsData =
+          (await notificationsResponse.json()) as Notification[];
+
         setCustomer(customerData);
         setProjects(projectsData);
         setServiceRequests(requestsData);
+        setNotifications(notificationsData);
 
         const attachmentEntries = await Promise.all(
           projectsData.map(async (project) => {
@@ -187,11 +225,31 @@ export default function CustomerDashboardPage() {
             return [project.id, data] as const;
           })
         );
+        const messageEntries = await Promise.all(
+          projectsData.map(async (project) => {
+            const response = await fetch(
+              `${API_URL}/messages/${project.id}`,
+              {
+                headers,
+              }
+            );
 
+            if (!response.ok) {
+              return [project.id, []] as const;
+            }
+
+            const data =
+              (await response.json()) as ProjectMessage[];
+
+            return [project.id, data] as const;
+          })
+        );
         setProjectUpdates(
           Object.fromEntries(updateEntries)
         );
-
+        setProjectMessages(
+          Object.fromEntries(messageEntries)
+        );
         setAttachments(
           Object.fromEntries(attachmentEntries)
         );
@@ -204,7 +262,6 @@ export default function CustomerDashboardPage() {
 
     loadCustomerData();
   }, [router]);
-
   async function uploadAttachment(projectId: string) {
     const file = selectedFiles[projectId];
 
@@ -301,7 +358,6 @@ export default function CustomerDashboardPage() {
       alert("Could not delete attachment.");
       return;
     }
-
     setAttachments((current) => ({
       ...current,
       [projectId]:
@@ -313,7 +369,88 @@ export default function CustomerDashboardPage() {
 
     alert("Attachment deleted.");
   }
+  async function markNotificationAsRead(notificationId: string) {
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-customer-token"
+    );
 
+    if (!token) {
+      router.replace("/customer/login");
+      return;
+    }
+
+    const response = await fetch(
+      `${API_URL}/notifications/${notificationId}/read`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      alert("Could not mark notification as read.");
+      return;
+    }
+
+    setNotifications((current) =>
+      current.map((notification) =>
+        notification.id === notificationId
+          ? { ...notification, isRead: true }
+          : notification
+      )
+    );
+  }
+  async function sendProjectMessage(projectId: string) {
+    const message = messageDrafts[projectId]?.trim();
+
+    if (!message) {
+      alert("Please write a message.");
+      return;
+    }
+
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-customer-token"
+    );
+
+    if (!token) {
+      router.replace("/customer/login");
+      return;
+    }
+
+    const response = await fetch(`${API_URL}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        projectId,
+        message,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message || "Could not send message.");
+      return;
+    }
+
+    setProjectMessages((current) => ({
+      ...current,
+      [projectId]: [
+        ...(current[projectId] || []),
+        data,
+      ],
+    }));
+
+    setMessageDrafts((current) => ({
+      ...current,
+      [projectId]: "",
+    }));
+  }
   function logout() {
     localStorage.removeItem(
       "elijah-cloud-platform-customer-token"
@@ -532,6 +669,74 @@ export default function CustomerDashboardPage() {
                 </h2>
               </div>
             </div>
+            {/* Notifications */}
+            <section style={{ marginTop: 30 }}>
+              <h2>
+                Notifications{" "}
+                {notifications.filter((notification) => !notification.isRead).length > 0 &&
+                  `🔔 ${notifications.filter((notification) => !notification.isRead).length
+                  }`}
+              </h2>
+
+              {notifications.filter(
+                (notification) => !notification.isRead
+              ).length === 0 ? (
+                <p>No new notifications.</p>
+              ) : (
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 12,
+                  }}
+                >
+                  {notifications
+                    .filter((notification) => !notification.isRead)
+                    .map((notification) => (<article
+                      key={notification.id}
+                      style={{
+                        background: notification.isRead ? "#ffffff" : "#eff6ff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
+                    >
+                      <strong>{notification.title}</strong>
+
+                      <p style={{ margin: "8px 0" }}>
+                        {notification.message}
+                      </p>
+
+                      <small style={{ color: "#64748b" }}>
+                        {new Date(notification.createdAt).toLocaleString()}
+                      </small>
+
+                      {!notification.isRead && (
+                        <div style={{ marginTop: 12 }}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              markNotificationAsRead(notification.id)
+                            }
+                            style={{
+                              padding: "8px 12px",
+                              border: "none",
+                              borderRadius: 8,
+                              background: "#2563eb",
+                              color: "#ffffff",
+                              cursor: "pointer",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Mark as read
+                          </button>
+                        </div>
+                      )}
+                    </article>
+                    ))}
+                </div>
+              )}
+            </section>
+
             <section style={{ marginTop: 30 }}>
               <h2>My Service Requests</h2>
 
@@ -612,6 +817,8 @@ export default function CustomerDashboardPage() {
                     const projectAttachments =
                       attachments[project.id] || [];
 
+                    const messages =
+                      projectMessages[project.id] || [];
                     return (
                       <article
                         key={project.id}
@@ -755,6 +962,95 @@ export default function CustomerDashboardPage() {
                               </div>
                             ))
                           )}
+                          <div
+                            style={{
+                              marginTop: 20,
+                              paddingTop: 16,
+                              borderTop: "1px solid #e2e8f0",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                marginBottom: 10,
+                                fontSize: 16,
+                              }}
+                            >
+                              Messages
+                            </h3>
+
+                            {messages.length === 0 ? (
+                              <p style={{ color: "#64748b" }}>
+                                No messages yet.
+                              </p>
+                            ) : (
+                              <div style={{ display: "grid", gap: 10 }}>
+                                {messages.map((message) => (
+                                  <div
+                                    key={message.id}
+                                    style={{
+                                      padding: 12,
+                                      borderRadius: 10,
+                                      background:
+                                        message.senderRole === "CUSTOMER"
+                                          ? "#eff6ff"
+                                          : "#f8fafc",
+                                    }}
+                                  >
+                                    <strong>
+                                      {message.senderRole === "CUSTOMER"
+                                        ? "You"
+                                        : "Admin"}
+                                    </strong>
+
+                                    <p style={{ margin: "6px 0" }}>
+                                      {message.message}
+                                    </p>
+
+                                    <small style={{ color: "#64748b" }}>
+                                      {new Date(message.createdAt).toLocaleString()}
+                                    </small>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <textarea
+                              value={messageDrafts[project.id] || ""}
+                              onChange={(event) =>
+                                setMessageDrafts((current) => ({
+                                  ...current,
+                                  [project.id]: event.target.value,
+                                }))
+                              }
+                              placeholder="Write a message to Admin..."
+                              rows={3}
+                              style={{
+                                width: "100%",
+                                marginTop: 14,
+                                padding: 12,
+                                border: "1px solid #cbd5e1",
+                                borderRadius: 10,
+                                resize: "vertical",
+                              }}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => sendProjectMessage(project.id)}
+                              style={{
+                                marginTop: 10,
+                                padding: "10px 16px",
+                                background: "#2563eb",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 8,
+                                cursor: "pointer",
+                                fontWeight: 700,
+                              }}
+                            >
+                              Send Message
+                            </button>
+                          </div>
                         </div>
                         <p>
                           {project.description ||

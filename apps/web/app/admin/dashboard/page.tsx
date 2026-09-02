@@ -3,6 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+type Notification = {
+  id: string;
+  recipientEmail: string;
+  recipientRole: "ADMIN" | "CUSTOMER";
+  type: string;
+  title: string;
+  message: string;
+  projectId?: string | null;
+  isRead: boolean;
+  createdAt: string;
+};
 type DashboardStats = {
   customers: number;
   projects: number;
@@ -47,6 +58,7 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const API_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -64,28 +76,42 @@ export default function AdminDashboard() {
           return;
         }
 
-        const response = await fetch(
-          `${API_URL}/dashboard/stats`,
-          {
+        const [response, notificationsResponse] = await Promise.all([
+          fetch(`${API_URL}/dashboard/stats`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
-        );
+          }),
 
-        if (response.status === 401 || response.status === 403) {
+          fetch(`${API_URL}/notifications/my`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ]);
+
+        if (
+          response.status === 401 ||
+          response.status === 403 ||
+          notificationsResponse.status === 401 ||
+          notificationsResponse.status === 403
+        ) {
           setError("Your session is invalid or expired.");
           return;
         }
 
-        if (!response.ok) {
+        if (!response.ok || !notificationsResponse.ok) {
           throw new Error(
             "Failed to load dashboard statistics"
           );
         }
 
         const data = (await response.json()) as DashboardStats;
+        const notificationsData =
+          (await notificationsResponse.json()) as Notification[];
+
         setStats(data);
+        setNotifications(notificationsData);
       } catch {
         setError("Could not load dashboard statistics.");
       } finally {
@@ -96,6 +122,39 @@ export default function AdminDashboard() {
     loadStats();
   }, [API_URL]);
 
+  async function markNotificationAsRead(notificationId: string) {
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-token"
+    );
+
+    if (!token) {
+      setError("You are not logged in.");
+      return;
+    }
+
+    const response = await fetch(
+      `${API_URL}/notifications/${notificationId}/read`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      alert("Could not mark notification as read.");
+      return;
+    }
+
+    setNotifications((current) =>
+      current.map((notification) =>
+        notification.id === notificationId
+          ? { ...notification, isRead: true }
+          : notification
+      )
+    );
+  }
   return (
     <main
       style={{
@@ -158,13 +217,80 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* Notifications */}
+          <section style={{ marginTop: 30 }}>
+            <h2>
+              Notifications{" "}
+              {notifications.filter((notification) => !notification.isRead).length > 0 &&
+                `🔔 ${notifications.filter((notification) => !notification.isRead).length
+                }`}
+            </h2>
+
+            {notifications.length === 0 ? (
+              <p>No notifications.</p>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gap: 12,
+                }}
+              >
+                {notifications
+                  .filter((notification) => !notification.isRead)
+                  .map((notification) => (<article
+                    key={notification.id}
+                    style={{
+                      background: notification.isRead ? "#ffffff" : "#eff6ff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 12,
+                      padding: 16,
+                    }}
+                  >
+                    <strong>{notification.title}</strong>
+
+                    <p style={{ margin: "8px 0" }}>
+                      {notification.message}
+                    </p>
+
+                    <small style={{ color: "#64748b" }}>
+                      {new Date(notification.createdAt).toLocaleString()}
+                    </small>
+                    {!notification.isRead && (
+                      <div style={{ marginTop: 12 }}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            markNotificationAsRead(notification.id)
+                          }
+                          style={{
+                            padding: "8px 12px",
+                            border: "none",
+                            borderRadius: 8,
+                            background: "#2563eb",
+                            color: "#ffffff",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Mark as read
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                  ))}
+              </div>
+            )}
+          </section>
+
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: 20,
               marginTop: 30,
+
             }}
+
           >
             <Link
               href="/admin/customers"

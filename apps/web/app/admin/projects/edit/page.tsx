@@ -16,6 +16,14 @@ type Project = {
   startDate?: string;
   dueDate?: string;
 };
+type ProjectMessage = {
+  id: string;
+  projectId: string;
+  senderEmail: string;
+  senderRole: "ADMIN" | "CUSTOMER";
+  message: string;
+  createdAt: string;
+};
 
 function EditProjectForm() {
   const searchParams = useSearchParams();
@@ -31,6 +39,9 @@ function EditProjectForm() {
   const [loading, setLoading] = useState(true);
   const [updateMessage, setUpdateMessage] = useState('');
   const [sendingUpdate, setSendingUpdate] = useState(false);
+  const [messages, setMessages] = useState<ProjectMessage[]>([]);
+  const [messageDraft, setMessageDraft] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -65,6 +76,18 @@ function EditProjectForm() {
         setDescription(project.description || '');
         setStartDate(project.startDate || '');
         setDueDate(project.dueDate || '');
+      }
+      const messagesResponse = await fetch(`${API_URL}/messages/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (messagesResponse.ok) {
+        const messagesData =
+          (await messagesResponse.json()) as ProjectMessage[];
+
+        setMessages(messagesData);
       }
 
       setLoading(false);
@@ -148,10 +171,56 @@ function EditProjectForm() {
     }
   }
 
+  async function handleSendMessage() {
+    if (!id) {
+      alert('Project ID is missing');
+      return;
+    }
+
+    if (!messageDraft.trim()) {
+      alert('Please write a message');
+      return;
+    }
+
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
+    try {
+      setSendingMessage(true);
+
+      const res = await fetch(`${API_URL}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId: id,
+          message: messageDraft.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || 'Could not send message');
+        return;
+      }
+
+      setMessages((current) => [
+        ...current,
+        data,
+      ]);
+
+      setMessageDraft('');
+    } finally {
+      setSendingMessage(false);
+    }
+  }
   if (loading) {
     return <main style={{ padding: 24 }}>Loading...</main>;
   }
-
   return (
     <main
       style={{
@@ -417,6 +486,99 @@ function EditProjectForm() {
               }}
             >
               {sendingUpdate ? 'Sending...' : 'Send Update'}
+            </button>
+          </div>
+        </div>
+
+        {/* Project Messages */}
+        <div
+          style={{
+            marginTop: 30,
+            paddingTop: 24,
+            borderTop: '1px solid #e2e8f0',
+          }}
+        >
+          <h2>Messages</h2>
+
+          <p style={{ color: '#64748b' }}>
+            Message the customer about this project.
+          </p>
+
+          {messages.length === 0 ? (
+            <p style={{ color: '#64748b' }}>
+              No messages yet.
+            </p>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gap: 10,
+                marginBottom: 16,
+              }}
+            >
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  style={{
+                    padding: 12,
+                    borderRadius: 10,
+                    background:
+                      message.senderRole === 'ADMIN'
+                        ? '#eff6ff'
+                        : '#f8fafc',
+                  }}
+                >
+                  <strong>
+                    {message.senderRole === 'ADMIN'
+                      ? 'You'
+                      : 'Customer'}
+                  </strong>
+
+                  <p style={{ margin: '6px 0' }}>
+                    {message.message}
+                  </p>
+
+                  <small style={{ color: '#64748b' }}>
+                    {new Date(message.createdAt).toLocaleString()}
+                  </small>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <textarea
+            value={messageDraft}
+            onChange={(e) => setMessageDraft(e.target.value)}
+            placeholder="Write a message to customer..."
+            rows={4}
+            style={{
+              width: '100%',
+              maxWidth: 600,
+              padding: 12,
+              border: '1px solid #cbd5e1',
+              borderRadius: 8,
+              boxSizing: 'border-box',
+              resize: 'vertical',
+            }}
+          />
+
+          <div>
+            <button
+              type="button"
+              onClick={handleSendMessage}
+              disabled={sendingMessage}
+              style={{
+                marginTop: 12,
+                padding: '10px 16px',
+                background: '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 8,
+                cursor: sendingMessage ? 'not-allowed' : 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {sendingMessage ? 'Sending...' : 'Send Message'}
             </button>
           </div>
         </div>
