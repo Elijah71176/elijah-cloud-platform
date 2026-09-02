@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -43,6 +44,8 @@ export class ProjectsService {
 
     @InjectRepository(ProjectAttachment)
     private readonly attachmentRepo: Repository<ProjectAttachment>,
+
+    private readonly notificationsService: NotificationsService,
   ) { }
 
 
@@ -56,11 +59,18 @@ export class ProjectsService {
     }
 
     return project;
+
+  }
+  async findProjectCustomer(customerId: string) {
+    return this.customerRepo.findOne({
+      where: { id: customerId },
+    });
   }
 
   findAll() {
     return this.projectRepo.find();
   }
+
 
   async create(dto: CreateProjectDto) {
     const customer = await this.customerRepo.findOne({
@@ -304,7 +314,24 @@ export class ProjectsService {
       message: dto.message,
     });
 
-    return this.updateRepo.save(projectUpdate);
+    const savedUpdate = await this.updateRepo.save(projectUpdate);
+
+    const customer = await this.customerRepo.findOne({
+      where: { id: project.customerId },
+    });
+
+    if (customer) {
+      await this.notificationsService.createNotification({
+        recipientEmail: customer.email,
+        recipientRole: 'CUSTOMER',
+        type: 'PROJECT_UPDATE',
+        title: 'Project Update',
+        message: dto.message,
+        projectId: project.id,
+      });
+    }
+
+    return savedUpdate;
   }
 
   async findProjectUpdates(projectId: string) {

@@ -1,3 +1,8 @@
+
+
+import { UsersService } from '../users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,11 +14,26 @@ export class RequestService {
   constructor(
     @InjectRepository(ServiceRequest)
     private readonly requestRepository: Repository<ServiceRequest>,
+
+    private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
   ) { }
 
   async create(createRequestDto: CreateRequestDto) {
     const request = this.requestRepository.create(createRequestDto);
     const savedRequest = await this.requestRepository.save(request);
+
+    const admins = await this.usersService.findAdmins();
+
+    for (const admin of admins) {
+      await this.notificationsService.createNotification({
+        recipientEmail: admin.email,
+        recipientRole: 'ADMIN',
+        type: 'SERVICE_REQUEST',
+        title: 'New Service Request',
+        message: `New service request from ${savedRequest.email}`,
+      });
+    }
 
     return {
       success: true,
