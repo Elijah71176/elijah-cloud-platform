@@ -14,6 +14,7 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { Res } from '@nestjs/common';
@@ -131,6 +132,21 @@ export class ProjectsController {
     }
 
     const attachment =
+      await this.projects.findAttachmentById(
+        projectId,
+        attachmentId,
+      );
+
+    if (
+      req.user.role === 'CUSTOMER' &&
+      attachment.category === 'deliverable'
+    ) {
+      throw new ForbiddenException(
+        'Customers cannot delete deliverables.',
+      );
+    }
+
+    const deletedAttachment =
       await this.projects.deleteAttachment(
         projectId,
         attachmentId,
@@ -138,7 +154,7 @@ export class ProjectsController {
 
     return {
       deleted: true,
-      attachmentId: attachment.id,
+      attachmentId: deletedAttachment.id,
     };
   }
 
@@ -211,6 +227,78 @@ export class ProjectsController {
     });
   }
 
+  // ADMIN: upload deliverable to project
+  @Post(':id/deliverables')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+    }),
+  )
+  async uploadDeliverable(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException(
+        'Please select a file to upload.',
+      );
+    }
+
+    await this.projects.validateAttachment(
+      id,
+      {
+        size: file.size,
+        mimetype: file.mimetype,
+      },
+      'deliverable',
+    );
+    const uploadDirectory = join(
+      process.cwd(),
+      'uploads',
+      'projects',
+    );
+
+    await mkdir(uploadDirectory, {
+      recursive: true,
+    });
+
+    const extension = extname(file.originalname);
+
+    const storedFilename =
+      `${randomUUID()}${extension}`;
+
+    const fullPath = join(
+      uploadDirectory,
+      storedFilename,
+    );
+
+    await writeFile(
+      fullPath,
+      file.buffer,
+    );
+
+    const savedDeliverable =
+      await this.projects.saveAttachmentMetadata({
+        projectId: id,
+        originalName: file.originalname,
+        storageKey: storedFilename,
+        mimeType: file.mimetype,
+        size: file.size,
+        category: 'deliverable',
+      });
+
+    await this.projects.notifyCustomerOfDeliverable(
+      id,
+      file.originalname,
+    );
+
+    return savedDeliverable;
+  }
   // ADMIN only - create project update
   @Post('updates')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
