@@ -158,6 +158,7 @@ export class ProjectsService {
       size: number;
       mimetype: string;
     },
+    category: 'attachment' | 'deliverable' = 'attachment',
   ) {
     if (file.size > this.MAX_FILE_SIZE) {
       throw new BadRequestException(
@@ -174,12 +175,15 @@ export class ProjectsService {
     const attachmentCount = await this.attachmentRepo.count({
       where: {
         projectId,
+        category,
       },
     });
 
     if (attachmentCount >= this.MAX_FILES_PER_PROJECT) {
       throw new BadRequestException(
-        'Maximum of 5 files allowed per project.',
+        category === 'deliverable'
+          ? 'Maximum of 5 deliverables allowed per project.'
+          : 'Maximum of 5 attachments allowed per project.',
       );
     }
   }
@@ -190,6 +194,7 @@ export class ProjectsService {
     storageKey: string;
     mimeType: string;
     size: number;
+    category?: 'attachment' | 'deliverable';
   }) {
     const attachment = this.attachmentRepo.create({
       projectId: data.projectId,
@@ -197,9 +202,39 @@ export class ProjectsService {
       storageKey: data.storageKey,
       mimeType: data.mimeType,
       size: data.size,
+      category: data.category ?? 'attachment',
     });
 
     return this.attachmentRepo.save(attachment);
+  }
+  async notifyCustomerOfDeliverable(
+    projectId: string,
+    fileName: string,
+  ) {
+    const project = await this.projectRepo.findOne({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException(
+        `Project ${projectId} not found`,
+      );
+    }
+
+    const customer = await this.customerRepo.findOne({
+      where: { id: project.customerId },
+    });
+
+    if (customer) {
+      await this.notificationsService.createNotification({
+        recipientEmail: customer.email,
+        recipientRole: 'CUSTOMER',
+        type: 'PROJECT_DELIVERABLE',
+        title: 'New Deliverable',
+        message: `${fileName} is now available for download.`,
+        projectId: project.id,
+      });
+    }
   }
 
   async findProjectAttachments(

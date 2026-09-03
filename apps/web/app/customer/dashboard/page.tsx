@@ -27,6 +27,7 @@ type ProjectAttachment = {
   storageKey: string;
   mimeType: string;
   size: number;
+  category: 'attachment' | 'deliverable';
   uploadedAt: string;
 };
 
@@ -401,6 +402,47 @@ export default function CustomerDashboardPage() {
           : notification
       )
     );
+  }
+
+  async function downloadAttachment(
+    projectId: string,
+    attachmentId: string,
+    originalName: string
+  ) {
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-customer-token"
+    );
+
+    if (!token) {
+      router.replace("/customer/login");
+      return;
+    }
+
+    const response = await fetch(
+      `${API_URL}/projects/${projectId}/attachments/${attachmentId}/download`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      alert("Could not download file.");
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = originalName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
   }
   async function sendProjectMessage(projectId: string) {
     const message = messageDrafts[projectId]?.trim();
@@ -1190,24 +1232,29 @@ export default function CustomerDashboardPage() {
                         </button>
 
                         <div style={{ marginTop: 18 }}>
-                          {projectAttachments.length === 0 ? (
+                          <h4>Attachments</h4>
+
+                          {projectAttachments.filter(
+                            (attachment) => attachment.category === "attachment"
+                          ).length === 0 ? (
                             <p>No attachments yet.</p>
                           ) : (
-                            projectAttachments.map(
-                              (attachment) => (
+                            projectAttachments
+                              .filter(
+                                (attachment) => attachment.category === "attachment"
+                              )
+                              .map((attachment) => (
                                 <div
                                   key={attachment.id}
                                   style={{
                                     padding: "10px 0",
-                                    borderBottom:
-                                      "1px solid #f1f5f9",
+                                    borderBottom: "1px solid #f1f5f9",
                                   }}
                                 >
                                   <div
                                     style={{
                                       display: "flex",
-                                      justifyContent:
-                                        "space-between",
+                                      justifyContent: "space-between",
                                       alignItems: "center",
                                       gap: 12,
                                       flexWrap: "wrap",
@@ -1215,8 +1262,7 @@ export default function CustomerDashboardPage() {
                                   >
                                     <div>
                                       <strong>
-                                        📄{" "}
-                                        {attachment.originalName}
+                                        📄 {attachment.originalName}
                                       </strong>
 
                                       <div
@@ -1226,11 +1272,7 @@ export default function CustomerDashboardPage() {
                                           marginTop: 4,
                                         }}
                                       >
-                                        {(
-                                          attachment.size /
-                                          1024
-                                        ).toFixed(1)}{" "}
-                                        KB
+                                        {(attachment.size / 1024).toFixed(1)} KB
                                       </div>
                                     </div>
 
@@ -1245,8 +1287,7 @@ export default function CustomerDashboardPage() {
                                         padding: "6px 10px",
                                         background: "#fff1f2",
                                         color: "#be123c",
-                                        border:
-                                          "1px solid #fecaca",
+                                        border: "1px solid #fecaca",
                                         borderRadius: 8,
                                         cursor: "pointer",
                                         fontWeight: 700,
@@ -1257,8 +1298,80 @@ export default function CustomerDashboardPage() {
                                     </button>
                                   </div>
                                 </div>
+                              ))
+                          )}
+
+                          <h4 style={{ marginTop: 24 }}>
+                            Deliverables
+                          </h4>
+
+                          {projectAttachments.filter(
+                            (attachment) => attachment.category === "deliverable"
+                          ).length === 0 ? (
+                            <p>No deliverables yet.</p>
+                          ) : (
+                            projectAttachments
+                              .filter(
+                                (attachment) => attachment.category === "deliverable"
                               )
-                            )
+                              .map((attachment) => (
+                                <div
+                                  key={attachment.id}
+                                  style={{
+                                    padding: "10px 0",
+                                    borderBottom: "1px solid #f1f5f9",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
+                                      gap: 12,
+                                      flexWrap: "wrap",
+                                    }}
+                                  >
+                                    <div>
+                                      <strong>
+                                        📦 {attachment.originalName}
+                                      </strong>
+
+                                      <div
+                                        style={{
+                                          color: "#64748b",
+                                          fontSize: 13,
+                                          marginTop: 4,
+                                        }}
+                                      >
+                                        {(attachment.size / 1024).toFixed(1)} KB
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        downloadAttachment(
+                                          project.id,
+                                          attachment.id,
+                                          attachment.originalName
+                                        )
+                                      }
+                                      style={{
+                                        padding: "6px 10px",
+                                        background: "#eff6ff",
+                                        color: "#1d4ed8",
+                                        border: "1px solid #bfdbfe",
+                                        borderRadius: 8,
+                                        cursor: "pointer",
+                                        fontWeight: 700,
+                                        fontSize: 12,
+                                      }}
+                                    >
+                                      Download
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
                           )}
                         </div>
                       </article>

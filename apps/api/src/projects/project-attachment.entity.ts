@@ -29,6 +29,12 @@ export class ProjectAttachment {
   @Column()
   size!: number;
 
+  @Column({
+    type: 'varchar',
+    default: 'attachment',
+  })
+  category!: 'attachment' | 'deliverable';
+
   @CreateDateColumn()
   uploadedAt!: Date;
 

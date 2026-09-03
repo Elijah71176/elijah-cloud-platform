@@ -24,6 +24,16 @@ type ProjectMessage = {
   message: string;
   createdAt: string;
 };
+type ProjectAttachment = {
+  id: string;
+  projectId: string;
+  originalName: string;
+  storageKey: string;
+  mimeType: string;
+  size: number;
+  category: 'attachment' | 'deliverable';
+  uploadedAt: string;
+};
 
 function EditProjectForm() {
   const searchParams = useSearchParams();
@@ -42,6 +52,9 @@ function EditProjectForm() {
   const [messages, setMessages] = useState<ProjectMessage[]>([]);
   const [messageDraft, setMessageDraft] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [deliverables, setDeliverables] = useState<ProjectAttachment[]>([]);
+  const [deliverableFile, setDeliverableFile] = useState<File | null>(null);
+  const [uploadingDeliverable, setUploadingDeliverable] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -88,6 +101,25 @@ function EditProjectForm() {
           (await messagesResponse.json()) as ProjectMessage[];
 
         setMessages(messagesData);
+      }
+      const attachmentsResponse = await fetch(
+        `${API_URL}/projects/${id}/attachments`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (attachmentsResponse.ok) {
+        const attachmentsData =
+          (await attachmentsResponse.json()) as ProjectAttachment[];
+
+        setDeliverables(
+          attachmentsData.filter(
+            (attachment) => attachment.category === 'deliverable'
+          )
+        );
       }
 
       setLoading(false);
@@ -218,6 +250,140 @@ function EditProjectForm() {
       setSendingMessage(false);
     }
   }
+  async function handleUploadDeliverable() {
+    if (!id) {
+      alert('Project ID is missing');
+      return;
+    }
+
+    if (!deliverableFile) {
+      alert('Please select a file');
+      return;
+    }
+
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
+    const formData = new FormData();
+    formData.append('file', deliverableFile);
+
+    try {
+      setUploadingDeliverable(true);
+
+      const res = await fetch(
+        `${API_URL}/projects/${id}/deliverables`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || 'Could not upload deliverable');
+        return;
+      }
+
+      setDeliverables((current) => [
+        ...current,
+        data,
+      ]);
+
+      setDeliverableFile(null);
+
+      alert('Deliverable uploaded successfully');
+    } finally {
+      setUploadingDeliverable(false);
+    }
+  }
+  async function handleDownloadDeliverable(
+    attachmentId: string,
+    originalName: string
+  ) {
+    if (!id) {
+      return;
+    }
+
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
+    const response = await fetch(
+      `${API_URL}/projects/${id}/attachments/${attachmentId}/download`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      alert('Could not download deliverable');
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = originalName;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  }
+  async function handleDeleteDeliverable(
+    attachmentId: string
+  ) {
+    if (!id) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Delete this deliverable?'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
+    const response = await fetch(
+      `${API_URL}/projects/${id}/attachments/${attachmentId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      alert('Could not delete deliverable');
+      return;
+    }
+
+    setDeliverables((current) =>
+      current.filter(
+        (deliverable) =>
+          deliverable.id !== attachmentId
+      )
+    );
+
+    alert('Deliverable deleted successfully');
+  }
+
   if (loading) {
     return <main style={{ padding: 24 }}>Loading...</main>;
   }
@@ -231,7 +397,7 @@ function EditProjectForm() {
     >
       <div
         style={{
-          maxWidth: 700,
+          maxWidth: 1000,
           background: '#ffffff',
           padding: 30,
           borderRadius: 12,
@@ -582,7 +748,139 @@ function EditProjectForm() {
             </button>
           </div>
         </div>
+        {/* Deliverables */}
+        <div
+          style={{
+            marginTop: 30,
+            paddingTop: 24,
+            borderTop: '1px solid #e2e8f0',
+          }}
+        >
+          <h2>Deliverables</h2>
 
+          <p style={{ color: '#64748b' }}>
+            Upload finished documents or files for the customer.
+          </p>
+
+          {deliverables.length === 0 ? (
+            <p style={{ color: '#64748b' }}>
+              No deliverables uploaded yet.
+            </p>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gap: 10,
+                marginBottom: 16,
+              }}
+            >
+              {deliverables.map((deliverable) => (
+                <div
+                  key={deliverable.id}
+                  style={{
+                    padding: 12,
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 10,
+                    background: '#f8fafc',
+                  }}
+                >
+                  <strong>
+                    📦 {deliverable.originalName}
+                  </strong>
+
+                  <div
+                    style={{
+                      color: '#64748b',
+                      fontSize: 13,
+                      marginTop: 4,
+                    }}
+                  >
+                    {(deliverable.size / 1024).toFixed(1)} KB
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDeleteDeliverable(deliverable.id)
+                    }
+                    style={{
+                      marginTop: 10,
+                      marginLeft: 8,
+                      padding: '8px 12px',
+                      background: '#dc2626',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDownloadDeliverable(
+                        deliverable.id,
+                        deliverable.originalName
+                      )
+                    }
+                    style={{
+                      marginTop: 10,
+                      padding: '8px 12px',
+                      background: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Download
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <input
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.txt"
+            onChange={(e) =>
+              setDeliverableFile(
+                e.target.files?.[0] ?? null
+              )
+            }
+          />
+
+
+          <div>
+            <button
+              type="button"
+              onClick={handleUploadDeliverable}
+              disabled={
+                uploadingDeliverable || !deliverableFile
+              }
+              style={{
+                marginTop: 12,
+                padding: '10px 16px',
+                background: '#0f172a',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 8,
+                cursor:
+                  uploadingDeliverable || !deliverableFile
+                    ? 'not-allowed'
+                    : 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {uploadingDeliverable
+                ? 'Uploading...'
+                : 'Upload Deliverable'}
+            </button>
+          </div>
+        </div>
         <div style={{ marginTop: 20 }}>
           <Link href="/admin/projects">
             ← Back to Projects
