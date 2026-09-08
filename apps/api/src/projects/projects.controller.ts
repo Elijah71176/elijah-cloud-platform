@@ -21,7 +21,7 @@ import { Res } from '@nestjs/common';
 import type { Response } from 'express';
 
 import { createReadStream } from 'fs';
-
+import { CreateProjectMilestoneDto } from './dto/create-project-milestone.dto';
 
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -38,6 +38,7 @@ import { CreateProjectUpdateDto } from './dto/create-project-update.dto';
 
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { UpdateProjectMilestoneDto } from './dto/update-project-milestone.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -248,7 +249,6 @@ export class ProjectsController {
         'Please select a file to upload.',
       );
     }
-
     await this.projects.validateAttachment(
       id,
       {
@@ -344,7 +344,31 @@ export class ProjectsController {
   ) {
     return this.projects.findByCustomer(customerId);
   }
+  // ADMIN only - create milestone
+  @Post('milestones')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
+  createMilestone(
+    @Body() dto: CreateProjectMilestoneDto,
+  ) {
+    return this.projects.createMilestone(dto);
+  }
+  @Get(':id/milestones')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'CUSTOMER')
+  async findProjectMilestones(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: any,
+  ) {
+    if (req.user.role === 'CUSTOMER') {
+      await this.projects.verifyCustomerOwnsProject(
+        id,
+        req.user.email,
+      );
+    }
 
+    return this.projects.findProjectMilestones(id);
+  }
   // ADMIN only
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -364,7 +388,19 @@ export class ProjectsController {
   ) {
     return this.projects.create(dto);
   }
-
+  // ADMIN only - update milestone
+  @Patch('milestones/:milestoneId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
+  updateMilestone(
+    @Param('milestoneId', new ParseUUIDPipe()) milestoneId: string,
+    @Body() dto: UpdateProjectMilestoneDto,
+  ) {
+    return this.projects.updateMilestone(
+      milestoneId,
+      dto,
+    );
+  }
   // ADMIN only
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -374,6 +410,15 @@ export class ProjectsController {
     @Body() dto: UpdateProjectDto,
   ) {
     return this.projects.update(id, dto);
+  }
+  // ADMIN only - delete milestone
+  @Delete('milestones/:milestoneId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
+  deleteMilestone(
+    @Param('milestoneId', new ParseUUIDPipe()) milestoneId: string,
+  ) {
+    return this.projects.deleteMilestone(milestoneId);
   }
 
   // ADMIN only

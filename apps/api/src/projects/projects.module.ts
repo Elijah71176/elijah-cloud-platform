@@ -10,6 +10,7 @@ import { Customer } from '../customers/customers.entity';
 import { ProjectsController } from './projects.controller';
 import { ProjectsService } from './projects.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ProjectMilestone } from './project-milestone.entity';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       Project,
       ProjectAttachment,
       ProjectUpdate,
+      ProjectMilestone,
       Customer,
     ]),
     NotificationsModule,
@@ -26,4 +28,4 @@ import { NotificationsModule } from '../notifications/notifications.module';
   providers: [ProjectsService],
   exports: [ProjectsService],
 })
-export class ProjectsModule {}
+export class ProjectsModule { }

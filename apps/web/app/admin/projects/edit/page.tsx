@@ -34,7 +34,15 @@ type ProjectAttachment = {
   category: 'attachment' | 'deliverable';
   uploadedAt: string;
 };
-
+type ProjectMilestone = {
+  id: string;
+  projectId: string;
+  title: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  targetDate?: string;
+  completedDate?: string;
+  createdAt: string;
+};
 function EditProjectForm() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
@@ -55,6 +63,13 @@ function EditProjectForm() {
   const [deliverables, setDeliverables] = useState<ProjectAttachment[]>([]);
   const [deliverableFile, setDeliverableFile] = useState<File | null>(null);
   const [uploadingDeliverable, setUploadingDeliverable] = useState(false);
+
+  const [milestones, setMilestones] = useState<ProjectMilestone[]>([]);
+  const [milestoneTitle, setMilestoneTitle] = useState('');
+  const [milestoneStatus, setMilestoneStatus] =
+    useState<ProjectMilestone['status']>('pending');
+  const [milestoneTargetDate, setMilestoneTargetDate] = useState('');
+  const [milestoneCompletedDate, setMilestoneCompletedDate] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -120,6 +135,21 @@ function EditProjectForm() {
             (attachment) => attachment.category === 'deliverable'
           )
         );
+      }
+      const milestonesResponse = await fetch(
+        `${API_URL}/projects/${id}/milestones`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (milestonesResponse.ok) {
+        const milestonesData =
+          (await milestonesResponse.json()) as ProjectMilestone[];
+
+        setMilestones(milestonesData);
       }
 
       setLoading(false);
@@ -383,6 +413,108 @@ function EditProjectForm() {
 
     alert('Deliverable deleted successfully');
   }
+  async function handleCreateMilestone() {
+    if (!id || !milestoneTitle.trim()) {
+      alert('Please enter a milestone title');
+      return;
+    }
+
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
+    const res = await fetch(`${API_URL}/projects/milestones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        projectId: id,
+        title: milestoneTitle.trim(),
+        status: milestoneStatus,
+        targetDate: milestoneTargetDate || undefined,
+        completedDate: milestoneCompletedDate || undefined,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || 'Could not create milestone');
+      return;
+    }
+
+    setMilestones((current) => [...current, data]);
+    setMilestoneTitle('');
+    setMilestoneStatus('pending');
+    setMilestoneTargetDate('');
+    setMilestoneCompletedDate('');
+  }
+
+  async function handleDeleteMilestone(milestoneId: string) {
+    const confirmed = window.confirm('Delete this milestone?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
+    const res = await fetch(
+      `${API_URL}/projects/milestones/${milestoneId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      alert('Could not delete milestone');
+      return;
+    }
+
+    setMilestones((current) =>
+      current.filter((milestone) => milestone.id !== milestoneId)
+    );
+  }
+  async function handleUpdateMilestone(
+    milestoneId: string,
+    status: ProjectMilestone['status']
+  ) {
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token'
+    );
+
+    const res = await fetch(
+      `${API_URL}/projects/milestones/${milestoneId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || 'Could not update milestone');
+      return;
+    }
+
+    setMilestones((current) =>
+      current.map((milestone) =>
+        milestone.id === milestoneId ? data : milestone
+      )
+    );
+  }
 
   if (loading) {
     return <main style={{ padding: 24 }}>Loading...</main>;
@@ -604,6 +736,101 @@ function EditProjectForm() {
         >
           Update Project
         </button>
+        {/* Milestones */}
+        <div
+          style={{
+            marginTop: 30,
+            paddingTop: 24,
+            borderTop: '1px solid #e2e8f0',
+          }}
+        >
+          <h2>Milestones / Timeline</h2>
+
+          <p style={{ color: '#64748b' }}>
+            Manage the stages of this project.
+          </p>
+
+          {milestones.map((milestone) => (
+            <div
+              key={milestone.id}
+              style={{
+                padding: 12,
+                marginBottom: 10,
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+              }}
+            >
+              <strong>{milestone.title}</strong>
+
+              <div style={{ marginTop: 8 }}>
+                <select
+                  value={milestone.status}
+                  onChange={(e) =>
+                    handleUpdateMilestone(
+                      milestone.id,
+                      e.target.value as ProjectMilestone['status']
+                    )
+                  }
+                >
+                  <option value="pending">Pending</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => handleDeleteMilestone(milestone.id)}
+                  style={{ marginLeft: 10 }}
+                >
+                  Delete
+                </button>
+              </div>
+
+              {milestone.targetDate && (
+                <small>Target: {milestone.targetDate}</small>
+              )}
+            </div>
+          ))}
+
+          <input
+            value={milestoneTitle}
+            onChange={(e) => setMilestoneTitle(e.target.value)}
+            placeholder="Milestone title"
+            style={{ padding: 10, marginTop: 10 }}
+          />
+
+          <select
+            value={milestoneStatus}
+            onChange={(e) =>
+              setMilestoneStatus(
+                e.target.value as ProjectMilestone['status']
+              )
+            }
+            style={{ padding: 10, marginLeft: 8 }}
+          >
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+
+          <input
+            type="date"
+            value={milestoneTargetDate}
+            onChange={(e) => setMilestoneTargetDate(e.target.value)}
+            style={{ padding: 10, marginLeft: 8 }}
+          />
+
+          <button
+            type="button"
+            onClick={handleCreateMilestone}
+            style={{
+              marginLeft: 8,
+              padding: '10px 16px',
+            }}
+          >
+            Add Milestone
+          </button>
+        </div>
 
         {/* Project Update Message */}
         <div

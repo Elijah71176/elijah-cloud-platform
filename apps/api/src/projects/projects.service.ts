@@ -4,12 +4,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+import {
+  ProjectMilestone,
+  MilestoneStatus,
+} from './project-milestone.entity';
+
 import { NotificationsService } from '../notifications/notifications.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { ProjectUpdate } from './project-update.entity';
 import { CreateProjectUpdateDto } from './dto/create-project-update.dto';
+import { UpdateProjectMilestoneDto } from './dto/update-project-milestone.dto';
 
 import { Project } from './project.entity';
 import { ProjectAttachment } from './project-attachment.entity';
@@ -45,19 +52,18 @@ export class ProjectsService {
     @InjectRepository(ProjectAttachment)
     private readonly attachmentRepo: Repository<ProjectAttachment>,
 
+    @InjectRepository(ProjectMilestone)
+    private readonly milestoneRepo: Repository<ProjectMilestone>,
+
     private readonly notificationsService: NotificationsService,
   ) { }
-
-
   async findOne(id: string) {
     const project = await this.projectRepo.findOne({
       where: { id },
     });
-
     if (!project) {
       throw new NotFoundException(`Project ${id} not found`);
     }
-
     return project;
 
   }
@@ -369,6 +375,73 @@ export class ProjectsService {
     return savedUpdate;
   }
 
+  async createMilestone(data: {
+    projectId: string;
+    title: string;
+    status?: MilestoneStatus;
+    targetDate?: string;
+    completedDate?: string;
+  }) {
+    const project = await this.findOne(data.projectId);
+
+    const milestone = this.milestoneRepo.create({
+      projectId: project.id,
+      title: data.title,
+      status: data.status ?? MilestoneStatus.PENDING,
+      targetDate: data.targetDate,
+      completedDate: data.completedDate,
+    });
+
+    return this.milestoneRepo.save(milestone);
+  }
+  async findProjectMilestones(projectId: string) {
+    await this.findOne(projectId);
+
+    return this.milestoneRepo.find({
+      where: {
+        projectId,
+      },
+      order: {
+        createdAt: 'ASC',
+      },
+    });
+  }
+
+  async updateMilestone(
+    milestoneId: string,
+    dto: UpdateProjectMilestoneDto,
+  ) {
+    const milestone = await this.milestoneRepo.findOne({
+      where: { id: milestoneId },
+    });
+
+    if (!milestone) {
+      throw new NotFoundException(
+        `Milestone ${milestoneId} not found`,
+      );
+    }
+
+    Object.assign(milestone, dto);
+    return this.milestoneRepo.save(milestone);
+  }
+  async deleteMilestone(milestoneId: string) {
+    const milestone = await this.milestoneRepo.findOne({
+      where: { id: milestoneId },
+    });
+
+    if (!milestone) {
+      throw new NotFoundException(
+        `Milestone ${milestoneId} not found`,
+      );
+    }
+
+    await this.milestoneRepo.remove(milestone);
+
+    return {
+      deleted: true,
+      milestoneId,
+    };
+  }
   async findProjectUpdates(projectId: string) {
     return this.updateRepo.find({
       where: { projectId },

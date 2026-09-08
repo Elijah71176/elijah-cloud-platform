@@ -47,6 +47,15 @@ type ProjectUpdate = {
   message: string;
   createdAt: string;
 };
+type ProjectMilestone = {
+  id: string;
+  projectId: string;
+  title: string;
+  status: "pending" | "in_progress" | "completed";
+  targetDate?: string;
+  completedDate?: string;
+  createdAt: string;
+};
 type ServiceRequest = {
   id: string;
   name: string;
@@ -79,6 +88,9 @@ export default function CustomerDashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectUpdates, setProjectUpdates] = useState<
     Record<string, ProjectUpdate[]>
+  >({});
+  const [projectMilestones, setProjectMilestones] = useState<
+    Record<string, ProjectMilestone[]>
   >({});
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -226,6 +238,27 @@ export default function CustomerDashboardPage() {
             return [project.id, data] as const;
           })
         );
+
+        const milestoneEntries = await Promise.all(
+          projectsData.map(async (project) => {
+            const response = await fetch(
+              `${API_URL}/projects/${project.id}/milestones`,
+              {
+                headers,
+              }
+            );
+
+            if (!response.ok) {
+              return [project.id, []] as const;
+            }
+
+            const data =
+              (await response.json()) as ProjectMilestone[];
+
+            return [project.id, data] as const;
+          })
+        );
+
         const messageEntries = await Promise.all(
           projectsData.map(async (project) => {
             const response = await fetch(
@@ -247,6 +280,9 @@ export default function CustomerDashboardPage() {
         );
         setProjectUpdates(
           Object.fromEntries(updateEntries)
+        );
+        setProjectMilestones(
+          Object.fromEntries(milestoneEntries)
         );
         setProjectMessages(
           Object.fromEntries(messageEntries)
@@ -861,6 +897,8 @@ export default function CustomerDashboardPage() {
 
                     const messages =
                       projectMessages[project.id] || [];
+                    const milestones =
+                      projectMilestones[project.id] || [];
                     return (
                       <article
                         key={project.id}
@@ -949,7 +987,48 @@ export default function CustomerDashboardPage() {
                             />
                           </div>
                         </div>
+                        {/* Milestones / Timeline */}
                         <div
+                          style={{
+                            marginTop: 20,
+                            paddingTop: 16,
+                            borderTop: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <h3 style={{ marginBottom: 10, fontSize: 16 }}>
+                            Milestones / Timeline
+                          </h3>
+
+                          {milestones.length === 0 ? (
+                            <p style={{ color: "#64748b" }}>
+                              No milestones yet.
+                            </p>
+                          ) : (
+                            milestones.map((milestone) => (
+                              <div
+                                key={milestone.id}
+                                style={{
+                                  padding: 12,
+                                  marginBottom: 10,
+                                  background: "#f8fafc",
+                                  borderRadius: 8,
+                                }}
+                              >
+                                <strong>{milestone.title}</strong>
+
+                                <p style={{ margin: "6px 0" }}>
+                                  Status: {milestone.status.replaceAll("_", " ")}
+                                </p>
+
+                                {milestone.targetDate && (
+                                  <small>
+                                    Target: {milestone.targetDate}
+                                  </small>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </div>                        <div
                           style={{
                             marginTop: 20,
                             paddingTop: 16,
