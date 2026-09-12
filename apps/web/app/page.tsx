@@ -6,14 +6,14 @@ export default function HomePage() {
       style={{
         minHeight: "100vh",
         background: "#f8fafc",
-        padding: "56px 24px",
+        padding: "72px 24px",
       }}
     >
       <section style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: 40,
             alignItems: "center",
           }}
@@ -30,17 +30,10 @@ export default function HomePage() {
                 margin: "6px 0 0",
               }}
             >
-              Docker, AWS, and CI/CD practices.            </p>
+              Cloud Development • Full-Stack Development • DevOps           </p>
 
-            <h1
-              style={{
-                fontSize: 52,
-                lineHeight: 1.05,
-                margin: "10px 0 18px",
-                color: "#0f172a",
-              }}
-            >
-              Junior AWS Cloud Developer building practical full-stack cloud solutions.
+            <h1 className="hero-title">
+              Cloud & Full-Stack Developer Building Practical Solutions for the Real World.
             </h1>
             <p
               style={{
@@ -50,10 +43,11 @@ export default function HomePage() {
                 maxWidth: 640,
               }}
             >
-              I build cloud-based applications using Next.js, NestJS, PostgreSQL,
-              Docker, AWS and CI/CD practices. Elijah Cloud Platform is my main
-              full-stack project, combining a public portfolio, service requests,
-              customer management and project tracking.
+              I build practical cloud and software solutions across backend development,
+              web applications, REST APIs, databases, cloud infrastructure and DevOps.
+              My experience includes Java and Spring Boot, modern JavaScript technologies,
+              AWS services, Docker, CI/CD and database development, with a focus on building
+              secure, scalable and reliable applications.
             </p>
 
             <div style={{ display: "flex", gap: 14, marginTop: 28, flexWrap: "wrap" }}>
@@ -68,8 +62,8 @@ export default function HomePage() {
                   fontWeight: 900,
                 }}
               >
-                Request a Service
-              </Link>
+                Work With Me
+                 </Link>
 
               <Link
                 href="/projects"
@@ -114,26 +108,27 @@ export default function HomePage() {
           >
             <h2 style={{ marginTop: 0 }}>Platform Features</h2>
 
-            {[
-              "Public portfolio project page",
-              "Service request form connected to backend",
-              "Admin project dashboard with CRUD",
-              "CI/CD deployment using GitHub Actions",
-              "Frontend hosted on AWS S3",
-              "Backend running on AWS EC2 with Docker",
-            ].map((item) => (
-              <div
-                key={item}
-                style={{
-                  padding: "12px 0",
-                  borderBottom: "1px solid #f1f5f9",
-                  color: "#334155",
-                  fontWeight: 700,
-                }}
-              >
-                ✓ {item}
-              </div>
-            ))}
+            {
+              [
+                "Public portfolio and professional profile",
+                "Customer service request system",
+                "Secure Admin and Customer portals",
+                "Project progress, updates and milestones",
+                "Customer and Admin messaging",
+                "Project documents and deliverables",
+              ].map((item) => (
+                <div
+                  key={item}
+                  style={{
+                    padding: "12px 0",
+                    borderBottom: "1px solid #f1f5f9",
+                    color: "#334155",
+                    fontWeight: 700,
+                  }}
+                >
+                  ✓ {item}
+                </div>
+              ))}
           </div>
         </div>
 
@@ -145,25 +140,26 @@ export default function HomePage() {
             marginTop: 50,
           }}
         >
-          {[
-            ["Frontend", "Next.js static export deployed to AWS S3"],
-            ["Backend", "NestJS API running in Docker on AWS EC2"],
-            ["Database", "PostgreSQL for requests, customers and projects"],
-            ["DevOps", "GitHub Actions pipeline for CI/CD deployment"],
-          ].map(([title, text]) => (
-            <article
-              key={title}
-              style={{
-                background: "white",
-                border: "1px solid #e2e8f0",
-                borderRadius: 18,
-                padding: 22,
-              }}
-            >
-              <h3 style={{ marginTop: 0 }}>{title}</h3>
-              <p style={{ color: "#64748b", lineHeight: 1.6 }}>{text}</p>
-            </article>
-          ))}
+          {
+            [
+              ["Cloud Development", "Building and deploying applications using AWS cloud services and modern cloud practices"],
+              ["Software Development", "Backend, frontend and REST API development using modern technologies and frameworks"],
+              ["Data & Databases", "Working with relational databases, application data and secure data management"],
+              ["DevOps & CI/CD", "Docker, Git, GitHub Actions and automated build and deployment workflows"],
+            ].map(([title, text]) => (
+              <article
+                key={title}
+                style={{
+                  background: "white",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 18,
+                  padding: 22,
+                }}
+              >
+                <h3 style={{ marginTop: 0 }}>{title}</h3>
+                <p style={{ color: "#64748b", lineHeight: 1.6 }}>{text}</p>
+              </article>
+            ))}
         </div>
       </section>
     </main>
