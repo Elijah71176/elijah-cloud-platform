@@ -51,11 +51,12 @@ export default function AboutPage() {
               fontWeight: 600,
             }}
           >
-            Cloud Developer • Full-Stack • DevOps
+            Cloud Development • Full-Stack Development • DevOps
           </p>
         </div>
 
         <div
+          className="about-profile"
           style={{
             display: "flex",
             gap: 24,
@@ -97,19 +98,41 @@ export default function AboutPage() {
           </div>
         </div>
         <p style={text}>
-          I am a Junior AWS Cloud Developer with hands-on experience in full-stack
-          development, cloud infrastructure, and DevOps practices. I enjoy building
-          practical applications that connect frontend, backend, databases, and cloud
-          services into complete working solutions.
+          I am a Cloud & Full-Stack Developer with hands-on experience in software
+          development, cloud technologies, and DevOps practices. I enjoy turning ideas
+          into practical solutions by connecting frontend applications, backend
+          services, databases, and cloud infrastructure into complete working systems.
         </p>
 
         <p style={text}>
-          My experience includes Java and Spring Boot, Node.js and NestJS, Next.js,
-          PostgreSQL, Docker, GitHub Actions, and AWS services such as EC2 and S3.
-          Through academic and personal projects, I have developed and deployed
-          cloud-based applications while working with CI/CD, REST APIs, databases,
-          containerization, and modern development workflows.
+          My experience spans Java and Spring Boot, modern JavaScript technologies,
+          cloud development, databases, Docker, CI/CD, and DevOps practices. I have
+          applied these skills while building practical projects and working with REST
+          APIs, cloud infrastructure, deployment, automation, and modern development
+          workflows. I am also open to learning and adopting new technologies based on
+          the needs of each project and solution.
         </p>
+
+        <div style={{ marginTop: 40 }}>
+          <h2 style={sectionTitle}>My Journey</h2>
+
+          <div style={card}>
+            <p style={textSmall}>
+              My professional journey began with a background in Nautical Science and
+              later included entrepreneurship and practical work experience. Over time,
+              my interest in creativity, problem-solving, and technology led me into
+              software and cloud development.
+            </p>
+
+            <p style={textSmall}>
+              I continued this transition through professional education in AWS Cloud
+              Development in Sweden, while building practical experience with software
+              development, cloud technologies, databases, DevOps, and IT support. This
+              combination of different experiences has shaped how I approach technology:
+              with curiosity, adaptability, and a focus on practical solutions.
+            </p>
+          </div>
+        </div>
 
         {/* Skills */}
         <div style={{ marginTop: 40 }}>
@@ -117,12 +140,30 @@ export default function AboutPage() {
 
           <div style={grid}>
             {[
-              ["Backend", "Spring Boot, NestJS, Node.js"],
-              ["Frontend", "Next.js, React"],
-              ["Database", "PostgreSQL"],
-              ["Cloud", "AWS (EC2, S3)"],
-              ["DevOps", "Docker, GitHub Actions, CI/CD"],
-              ["Tools", "Git, Linux (WSL), VS Code, IntelliJ IDEA"],
+              [
+                "Backend Development",
+                "Java, Spring Boot, Node.js, NestJS, Express.js, REST APIs",
+              ],
+              [
+                "Frontend Development",
+                "JavaScript, TypeScript, Next.js, React, HTML5, CSS3, Bootstrap",
+              ],
+              [
+                "Databases",
+                "PostgreSQL, MySQL, MongoDB, SQL, NoSQL, ORM & Database Migration",
+              ],
+              [
+                "Cloud & AWS",
+                "EC2, S3, RDS, IAM, Lambda, Elastic Beanstalk, CodePipeline, CloudFormation",
+              ],
+              [
+                "DevOps & Automation",
+                "Docker, Docker Compose, CI/CD, GitHub Actions, Maven",
+              ],
+              [
+                "Development & API Tools",
+                "Git, GitHub, Linux, API Integration, JWT Authentication, Testing, Troubleshooting",
+              ],
             ].map(([title, value]) => (
               <div key={title} style={card}>
                 <strong>{title}</strong>
@@ -138,7 +179,7 @@ export default function AboutPage() {
 
           <div style={grid}>
             <div style={card}>
-              <strong>AWS Cloud Developer</strong>
+              <strong>Cloud Developer – AWS</strong>
               <p style={textSmall}>
                 Higher Vocational Education Diploma — JENSEN yrkeshögskola,
                 Sweden. SeQF Level 5 / EQF Level 5.
@@ -146,19 +187,21 @@ export default function AboutPage() {
             </div>
 
             <div style={card}>
-              <strong>Docker Basics for DevOps</strong>
+              <strong>Diploma in Nautical Science</strong>
               <p style={textSmall}>
-                KodeKloud • Coursera
+                Federal College of Fisheries and Marine Technology, Lagos, Nigeria.
+                2004–2006.
               </p>
             </div>
 
             <div style={card}>
-              <strong>
-                Operating Systems and You: Becoming a Power User
-              </strong>
-              <p style={textSmall}>
-                Google • Coursera
-              </p>
+              <strong>Docker Basics for DevOps</strong>
+              <p style={textSmall}>KodeKloud • August 2025</p>
+            </div>
+
+            <div style={card}>
+              <strong>Operating Systems and You: Becoming a Power User</strong>
+              <p style={textSmall}>Google • Coursera • February 2026</p>
             </div>
           </div>
         </div>
@@ -168,26 +211,30 @@ export default function AboutPage() {
           <h2 style={sectionTitle}>Experience</h2>
 
           <div style={card}>
-            <strong>Full-stack Cloud Projects</strong>
+            <strong>Elijah Cloud Platform</strong>
             <p style={textSmall}>
-              Built and deployed cloud-based applications including Elijah Cloud Platform with frontend (Next.js), backend (NestJS), PostgreSQL database,
-              and AWS infrastructure (EC2 & S3).
+              Building a full-stack platform with Next.js, NestJS, PostgreSQL, REST APIs,
+              authentication, Admin and Customer portals, project management, messaging,
+              notifications, milestones, documents, and service request functionality.
             </p>
           </div>
 
           <div style={card}>
-            <strong>Java Backend Development</strong>
+            <strong>Cloud & DevOps</strong>
             <p style={textSmall}>
-              Developed backend systems using Spring Boot, including REST APIs,
-              database integration, and structured application architecture.
+              Worked with AWS cloud services, Docker, CI/CD pipelines, GitHub Actions,
+              AWS CodePipeline, deployment workflows, and cloud infrastructure while
+              building and deploying applications across different development projects.
             </p>
           </div>
 
           <div style={card}>
-            <strong>DevOps & Cloud Deployment</strong>
+            <strong>Backend & API Development</strong>
             <p style={textSmall}>
-              Set up CI/CD pipelines using GitHub Actions, containerized applications
-              with Docker, and deployed services on AWS.
+              Built backend applications and REST APIs using Java, Spring Boot, Node.js,
+              NestJS, and Express, with experience in database integration,
+              authentication and authorization, application logic, and structured
+              backend architecture.
             </p>
           </div>
         </div>
@@ -198,10 +245,13 @@ export default function AboutPage() {
 
           <div style={card}>
             <p style={textSmall}>
-              I am looking for an opportunity to begin my career as a Junior Cloud Developer,
-              Backend Developer, or Full-Stack Developer. With hands-on experience in cloud-native development, AWS, Java, Spring Boot, Node.js, Next.js, Next.js, and DevOps practices, I am eager to contribute to real-world projects, collaborate with talented teams, and continue growing as a software engineer.
-              I am passionate about building scalable solutions and making a positive impact through technology.
-
+              I am looking for opportunities where I can contribute to meaningful
+              software, cloud, and technology projects while continuing to grow as a
+              developer. I am interested in working with teams and clients where I can
+              apply my current skills, solve practical problems, learn new technologies,
+              and contribute to secure, reliable, and scalable solutions. My long-term
+              goal is to continue developing as a well-rounded technology professional
+              while creating solutions that deliver real value.
             </p>
           </div>
         </div>

@@ -1,3 +1,7 @@
+
+import Link from "next/link";
+
+
 export default function ServicesPage() {
   const services = [
     {
@@ -71,6 +75,23 @@ export default function ServicesPage() {
               <p style={{ color: "#64748b", lineHeight: 1.6 }}>{s.desc}</p>
             </div>
           ))}
+        </div>
+
+        <div style={{ marginTop: 32 }}>
+          <Link
+            href="/request"
+            style={{
+              display: "inline-block",
+              background: "#2563eb",
+              color: "white",
+              padding: "13px 18px",
+              borderRadius: 12,
+              textDecoration: "none",
+              fontWeight: 900,
+            }}
+          >
+            Request a Service
+          </Link>
         </div>
       </section>
     </main>
