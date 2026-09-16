@@ -4,12 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { Customer } from './customers.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { UsersService } from '../users/users.service';
+import { User, UserRole } from '../users/user.entity';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
 export class CustomerService {
@@ -17,6 +20,7 @@ export class CustomerService {
     @InjectRepository(Customer)
     private readonly customerRepo: Repository<Customer>,
     private readonly usersService: UsersService,
+    private readonly dataSource: DataSource,
   ) { }
 
   findAll() {
@@ -56,14 +60,36 @@ export class CustomerService {
   async create(dto: CreateCustomerDto) {
     const { password, ...customerData } = dto;
 
-    await this.usersService.createCustomerUser(
-      dto.email,
-      password,
-    );
+    return this.dataSource.transaction(async (manager) => {
+      const userRepo = manager.getRepository(User);
+      const customerRepo = manager.getRepository(Customer);
 
-    const customer = this.customerRepo.create(customerData);
+      const existingUser = await userRepo.findOne({
+        where: { email: dto.email },
+      });
 
-    return this.customerRepo.save(customer);
+      if (existingUser) {
+        throw new ConflictException(
+          'A customer with this email already exists',
+        );
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      const user = userRepo.create({
+        email: dto.email,
+        passwordHash,
+        role: UserRole.CUSTOMER,
+        isActive: true,
+      });
+
+      await userRepo.save(user);
+
+      const customer = customerRepo.create(customerData);
+
+      return customerRepo.save(customer);
+    });
+
   }
   async resetPassword(id: string, newPassword: string) {
     const customer = await this.findOne(id);
