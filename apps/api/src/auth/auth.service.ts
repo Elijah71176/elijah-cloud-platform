@@ -15,7 +15,7 @@ export class AuthService {
 
 
 
-    if (!user) {
+    if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -23,7 +23,7 @@ export class AuthService {
       password,
       user.passwordHash,
     );
-    
+
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid credentials');
     }
