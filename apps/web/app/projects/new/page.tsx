@@ -122,8 +122,19 @@ export default function NewProjectPage() {
   useEffect(() => {
     async function loadCustomers() {
       try {
-        const res = await fetch(`${API_URL}/customers`);
+        const token = localStorage.getItem(
+          'elijah-cloud-platform-token',
+        );
 
+        if (!token) {
+          throw new Error('Admin session not found');
+        }
+
+        const res = await fetch(`${API_URL}/customers`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) {
           throw new Error('Failed to load customers');
         }
@@ -150,12 +161,21 @@ export default function NewProjectPage() {
     }
 
     setSubmitting(true);
+    const token = localStorage.getItem(
+      'elijah-cloud-platform-token',
+    );
 
+    if (!token) {
+      setError('Admin session not found. Please log in again.');
+      setSubmitting(false);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: title.trim(),

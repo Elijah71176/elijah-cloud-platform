@@ -20,12 +20,13 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { ResetCustomerPasswordDto } from './dto/reset-customer-password.dto';
 
 @Controller('customers')
 export class CustomerController {
   constructor(
     private readonly customers: CustomerService,
-  ) {}
+  ) { }
 
   // CUSTOMER only - own account
   // IMPORTANT: this must stay before @Get(':id')
@@ -63,7 +64,17 @@ export class CustomerController {
   ) {
     return this.customers.create(dto);
   }
-
+  @Post(':id/reset-password')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN')
+  resetPassword(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: ResetCustomerPasswordDto,) {
+    return this.customers.resetPassword(
+      id,
+      body.newPassword,
+    );
+  }
   // ADMIN only
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)

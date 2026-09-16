@@ -28,6 +28,7 @@ export default function NewCustomerPage() {
     name: "",
     email: "",
     phone: "",
+    password: "",
     description: "",
   });
 
@@ -120,6 +121,15 @@ export default function NewCustomerPage() {
           type="email"
           placeholder="Email Address"
           value={form.email}
+          onChange={handleChange}
+          style={inputStyle}
+          required
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="Temporary Password"
+          value={form.password}
           onChange={handleChange}
           style={inputStyle}
           required

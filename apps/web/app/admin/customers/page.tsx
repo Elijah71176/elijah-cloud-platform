@@ -98,6 +98,41 @@ export default function AdminCustomersPage() {
       )
     );
   }
+  async function resetCustomerPassword(id: string) {
+    const newPassword = window.prompt(
+      "Enter a new temporary password for this customer:"
+    );
+
+    if (!newPassword) return;
+
+    const token = localStorage.getItem(
+      "elijah-cloud-platform-token"
+    );
+
+    if (!token) {
+      alert("Admin session not found. Please log in again.");
+      return;
+    }
+
+    const response = await fetch(
+      `${API_URL}/customers/${id}/reset-password`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newPassword }),
+      }
+    );
+
+    if (!response.ok) {
+      alert("Could not reset customer password.");
+      return;
+    }
+
+    alert("Customer password reset successfully.");
+  }
 
   return (
     <main
@@ -194,6 +229,22 @@ export default function AdminCustomersPage() {
             >
               Edit
             </Link>
+            
+            <button
+              onClick={() => resetCustomerPassword(customer.id)}
+              style={{
+                marginLeft: 14,
+                padding: "8px 12px",
+                background: "#eff6ff",
+                color: "#2563eb",
+                border: "1px solid #bfdbfe",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              Reset Password
+            </button>
 
             <button
               onClick={() => deleteCustomer(customer.id)}
