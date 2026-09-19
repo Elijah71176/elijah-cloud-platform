@@ -80,7 +80,10 @@ export default function CustomerLoginPage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#f8fafc",
+        backgroundImage: 'url("/images/login-background.png")',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         padding: 40,
       }}
     >
