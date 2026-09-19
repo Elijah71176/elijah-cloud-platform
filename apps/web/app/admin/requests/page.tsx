@@ -102,7 +102,14 @@ export default function AdminRequestsPage() {
     if (request.converted) {
       return;
     }
+    const password = window.prompt(
+      "Enter an initial password for this customer (minimum 8 characters):"
+    );
 
+    if (!password || password.length < 8) {
+      alert("Customer password must be at least 8 characters.");
+      return;
+    }
     const token = getToken();
 
     if (!token) {
@@ -121,6 +128,7 @@ export default function AdminRequestsPage() {
         email: request.email,
         phone: request.telephone || "",
         description: `${request.service}: ${request.message}`,
+        password: password,
       }),
     });
 
