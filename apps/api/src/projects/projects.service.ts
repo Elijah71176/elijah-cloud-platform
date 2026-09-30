@@ -24,8 +24,7 @@ import { Customer } from '../customers/customers.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
-import { unlink } from 'fs/promises';
-import { join } from 'path';
+import { AttachmentStorageService } from './attachment-storage.service';
 
 @Injectable()
 export class ProjectsService {
@@ -56,6 +55,7 @@ export class ProjectsService {
     private readonly milestoneRepo: Repository<ProjectMilestone>,
 
     private readonly notificationsService: NotificationsService,
+    private readonly attachmentStorage: AttachmentStorageService,
   ) { }
   async findOne(id: string) {
     const project = await this.projectRepo.findOne({
@@ -287,20 +287,9 @@ export class ProjectsService {
       attachmentId,
     );
 
-    const filePath = join(
-      process.cwd(),
-      'uploads',
-      'projects',
-      attachment.storageKey,
-    );
+   await this.attachmentStorage.delete(attachment.storageKey
 
-    try {
-      await unlink(filePath);
-    } catch (error: any) {
-      if (error?.code !== 'ENOENT') {
-        throw error;
-      }
-    }
+   );
 
     await this.attachmentRepo.remove(attachment);
 

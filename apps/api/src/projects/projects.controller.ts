@@ -27,7 +27,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 
-import { mkdir, writeFile } from 'fs/promises';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
 
@@ -39,11 +38,14 @@ import { CreateProjectUpdateDto } from './dto/create-project-update.dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { UpdateProjectMilestoneDto } from './dto/update-project-milestone.dto';
+import { AttachmentStorageService } from './attachment-storage.service';
+
 
 @Controller('projects')
 export class ProjectsController {
   constructor(
     private readonly projects: ProjectsService,
+    private readonly attachmentStorage: AttachmentStorageService,
   ) { }
 
   // CUSTOMER: only their own projects
@@ -95,13 +97,6 @@ export class ProjectsController {
         attachmentId,
       );
 
-    const filePath = join(
-      process.cwd(),
-      'uploads',
-      'projects',
-      attachment.storageKey,
-    );
-
     res.setHeader(
       'Content-Type',
       attachment.mimeType,
@@ -112,8 +107,10 @@ export class ProjectsController {
       `attachment; filename="${attachment.originalName}"`,
     );
 
-    const fileStream = createReadStream(filePath);
+    const fileStream = await this.attachmentStorage.read(
+      attachment.storageKey,
 
+    );
     fileStream.pipe(res);
   }
 
@@ -194,31 +191,14 @@ export class ProjectsController {
       mimetype: file.mimetype,
     });
 
-    const uploadDirectory = join(
-      process.cwd(),
-      'uploads',
-      'projects',
-    );
-
-    await mkdir(uploadDirectory, {
-      recursive: true,
-    });
-
     const extension = extname(file.originalname);
+    const storedFilename = `${randomUUID()}${extension}`;
 
-    const storedFilename =
-      `${randomUUID()}${extension}`;
-
-    const fullPath = join(
-      uploadDirectory,
+    await this.attachmentStorage.save(
       storedFilename,
-    );
-
-    await writeFile(
-      fullPath,
       file.buffer,
+      file.mimetype,
     );
-
     return this.projects.saveAttachmentMetadata({
       projectId: id,
       originalName: file.originalname,
@@ -257,30 +237,10 @@ export class ProjectsController {
       },
       'deliverable',
     );
-    const uploadDirectory = join(
-      process.cwd(),
-      'uploads',
-      'projects',
-    );
-
-    await mkdir(uploadDirectory, {
-      recursive: true,
-    });
-
     const extension = extname(file.originalname);
+    const storedFilename = `${randomUUID()}${extension}`;
 
-    const storedFilename =
-      `${randomUUID()}${extension}`;
-
-    const fullPath = join(
-      uploadDirectory,
-      storedFilename,
-    );
-
-    await writeFile(
-      fullPath,
-      file.buffer,
-    );
+    await this.attachmentStorage.save(storedFilename, file.buffer);
 
     const savedDeliverable =
       await this.projects.saveAttachmentMetadata({
