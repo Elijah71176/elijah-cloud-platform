@@ -11,6 +11,7 @@ import { ProjectsController } from './projects.controller';
 import { ProjectsService } from './projects.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ProjectMilestone } from './project-milestone.entity';
+import { AttachmentStorageService } from './attachment-storage.service';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { ProjectMilestone } from './project-milestone.entity';
   ],
 
   controllers: [ProjectsController],
-  providers: [ProjectsService],
+  providers: [ProjectsService, AttachmentStorageService],
   exports: [ProjectsService],
 })
 export class ProjectsModule { }
