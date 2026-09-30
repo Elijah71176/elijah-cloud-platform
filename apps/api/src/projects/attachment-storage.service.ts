@@ -6,26 +6,26 @@ import { Readable } from 'stream';
 
 @Injectable()
 export class AttachmentStorageService {
-    async save(key: string, content: Buffer): Promise<void> {
-        const directory = join(process.cwd(), 'uploads', 'projects');
+  async save(key: string, content: Buffer, _mimeType?: string): Promise<void> {
+    const directory = join(process.cwd(), 'uploads', 'projects');
 
-        await mkdir(directory, { recursive: true });
-        await writeFile(join(directory, key), content);
-    }
-    read(key: string): Readable {
-        const filePath = join(process.cwd(), 'uploads', 'projects', key);
-        return createReadStream(filePath);
-    }
-    async delete(key: string): Promise<void> {
-  const filePath = join(process.cwd(), 'uploads', 'projects', key);
+    await mkdir(directory, { recursive: true });
+    await writeFile(join(directory, key), content);
+  }
+  async read(key: string): Promise<Readable> {
+    const filePath = join(process.cwd(), 'uploads', 'projects', key);
+    return createReadStream(filePath);
+  }
+  async delete(key: string): Promise<void> {
+    const filePath = join(process.cwd(), 'uploads', 'projects', key);
 
-  try {
-    await unlink(filePath);
-  } catch (error: any) {
-    if (error?.code !== 'ENOENT') {
-      throw error;
+    try {
+      await unlink(filePath);
+    } catch (error: any) {
+      if (error?.code !== 'ENOENT') {
+        throw error;
+      }
     }
   }
-}
 }
 

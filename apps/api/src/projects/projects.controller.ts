@@ -107,7 +107,10 @@ export class ProjectsController {
       `attachment; filename="${attachment.originalName}"`,
     );
 
-    const fileStream = this.attachmentStorage.read(attachment.storageKey);
+    const fileStream = await this.attachmentStorage.read(
+      attachment.storageKey,
+
+    );
     fileStream.pipe(res);
   }
 
@@ -191,8 +194,11 @@ export class ProjectsController {
     const extension = extname(file.originalname);
     const storedFilename = `${randomUUID()}${extension}`;
 
-    await this.attachmentStorage.save(storedFilename, file.buffer);
-
+    await this.attachmentStorage.save(
+      storedFilename,
+      file.buffer,
+      file.mimetype,
+    );
     return this.projects.saveAttachmentMetadata({
       projectId: id,
       originalName: file.originalname,
