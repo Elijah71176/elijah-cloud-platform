@@ -22,7 +22,11 @@ export class S3AttachmentStorageService {
         }
 
         this.bucket = bucket;
-        this.client = new S3Client({ region });
+        this.client = new S3Client({
+            region,
+            endpoint: process.env.AWS_ENDPOINT_URL_S3 || undefined,
+            forcePathStyle: Boolean(process.env.AWS_ENDPOINT_URL_S3),
+        });
     }
     async save(key: string, content: Buffer, mimeType: string): Promise<void> {
         await this.client.send(
