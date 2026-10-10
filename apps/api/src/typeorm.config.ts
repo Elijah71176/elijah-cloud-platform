@@ -12,7 +12,7 @@ export default new DataSource({
     ? {
         rejectUnauthorized: false,
       }
-    : false,
+    : undefined,
 
   entities: ['src/**/*.entity.ts'],
   migrations: ['src/migrations/*.ts'],

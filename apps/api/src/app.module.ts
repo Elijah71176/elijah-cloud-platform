@@ -24,10 +24,10 @@ const isAwsRds =
         ? {
           rejectUnauthorized: false,
         }
-        : false,
+        : undefined,
 
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: process.env.NODE_ENV !== 'production',
     }),
 
     CustomerModule,
