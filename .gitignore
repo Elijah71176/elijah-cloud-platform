@@ -10,3 +10,5 @@ apps/api/uploads/
 # Local attachment test files
 customer-test.txt
 20ded789-36f2-4204-80ce-3222a581b377
+
+/apps/api/.env.neon
